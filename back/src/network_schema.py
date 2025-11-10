@@ -44,7 +44,7 @@ class NodeInterface:
     Represents an interface of a network node.
 
     Attributes:
-        connect (str): Label of the node the interface connects to (e.g., "l2sw1").
+        connect (str): Unique identifier of the edge the interface connects to (e.g., "edge_lecszk09edp01gxyfdw").
         id (str): Unique identifier for the interface (e.g., "l2sw1_1").
         name (str): Name of the interface (e.g., "l2sw1_1").
         ip (str): IP address (e.g., "10.0.0.1").
