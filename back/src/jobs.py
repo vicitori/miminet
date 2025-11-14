@@ -5,7 +5,7 @@ import ipaddress
 from netaddr import EUI, AddrFormatError
 from typing import Any, Callable, List, Dict
 from network_schema import Job
-from mininet.log import info
+from mininet.log import info, error
 from ipmininet.host.config.dnsmasq import Dnsmasq
 
 
@@ -444,6 +444,25 @@ def dhcp_server(job: Job, job_host):
     job_host.start_daemon(daemon)
 
 
+def duplicate_packets(job: Job, job_host: Any) -> None:
+    try:
+        arg_percent = int(job.arg_1)
+        arg_iface = job.arg_2 or "eth0"
+    except (ValueError, TypeError):
+        error(f"duplicate_packets: invalid arguments - percent='{job.arg_1}', interface='{job.arg_2}'\n")
+        return
+
+    if arg_percent > 100 or arg_percent < 0:
+        error(f"duplicate_packets: percentage must be between 0-100, got {arg_percent}\n")
+        return
+
+    if not valid_iface(arg_iface):
+        error(f"duplicate_packets: invalid interface name '{arg_iface}'\n")
+        return
+    # возможно нельзя запустать под sudo в контейнере, нужно проверить
+    job_host.cmd(f"sudo tc qdisc replace dev {arg_iface} root netem duplicate {arg_percent}%")
+
+
 class Jobs:
     """Class for representing various commands for working with miminet network"""
 
@@ -474,6 +493,7 @@ class Jobs:
             201: open_tcp_server_handler,
             202: block_tcp_udp_port,
             203: dhcp_server,
+            204: duplicate_packets,
         }
         self._job: Job = job
         self._job_host = job_host
