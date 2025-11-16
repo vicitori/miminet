@@ -326,13 +326,45 @@ const ConfigHubName = function (hostname) {
     $('#config_hub_name').val(hostname);
 }
 
-const ConfigEdgePercentage = function (edge_loss) {
+const ConfigEdgeNetworkIssues = function (issues_type, issue_percentage) {
 
-    var text = document.getElementById('config_edge_save_loss_script').innerHTML;
+    var text = document.getElementById('config_edge_network_issues_script').innerHTML;
 
     $(config_edge_main_form_id).prepend(text);
-    $('#edge_loss').val(edge_loss);
-}
+
+    const defaultType = issues_type || 'none';
+    $('#edge_issue_type').val(defaultType);
+    $('#edge_issue_percentage').val(issue_percentage || 0);
+
+    const updatePercentageLabel = function(issueType) {
+        const label = $('#edge_issue_percentage_label');
+        if (issueType === 'loss') {
+            label.text('Процент потерь (%)');
+        } else if (issueType === 'dup') {
+            label.text('Процент дублирования (%)');
+        } else {
+            label.text('Интенсивность помех (%)');
+        }
+    };
+
+    if (defaultType === 'none') {
+        $('#edge_issue_percentage_container').hide();
+    } else {
+        updatePercentageLabel(defaultType);
+        $('#edge_issue_percentage_container').show();
+    }
+
+    $('#edge_issue_type').on('change', function() {
+        const selectedValue = this.value;
+        if (selectedValue === 'none') {
+            $('#edge_issue_percentage_container').hide();
+            $('#edge_issue_percentage').val(0);
+        } else {
+            $('#edge_issue_percentage_container').show();
+            updatePercentageLabel(selectedValue);
+        }
+    });
+};
 
 const ConfigEdgeEndpoints = function (edge_source, edge_target) {
 
