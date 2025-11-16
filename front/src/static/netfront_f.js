@@ -335,7 +335,8 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
 
     let edge_source = ed.data.source;
     let edge_target = ed.data.target;
-    let edge_loss = ed.data.loss_percentage || 0
+    let edge_issue_type = ed.data.issue_type || "none";
+    let edge_issue_percetage = ed.data.issue_percentage || 0
 
     // Create form
     if (shared){
@@ -346,7 +347,7 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
 
 
     // Add loss percentage info
-    ConfigEdgePercentage(edge_loss)
+    ConfigEdgeNetworkIssues(edge_issue_type, edge_issue_percetage);
 
     // Add source and target info
     ConfigEdgeEndpoints(edge_source, edge_target);
@@ -710,9 +711,13 @@ const MoveNodes = function(){
 const prepareStylesheet = function() {
     const getColor = function(ele) {
         if (ele.group() === "edges") {
-            const loss = ele.data('loss_percentage') || 0;
-            if (loss > 0)
-                return '#FF8C00';
+            const type =  ele.data('issue_type') || "";
+            const percentage = ele.data('issue_percentage') || 0;
+            if (percentage > 0)
+                if (type === "loss")
+                    return '#FF8C00';
+                if (type === "dup")
+                    return '#26AE31';
         }
         return ele.data('color') || '#9FBFE5';
     };
