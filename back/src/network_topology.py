@@ -136,9 +136,10 @@ class MiminetTopology(IPTopo):
             edge_id = edge.data.id
             source_id = edge.data.source
             target_id = edge.data.target
-            loss_percentage = (
-                edge.data.loss_percentage
-                if edge.data.loss_percentage is not None
+            issue_type = (edge.data.issue_type if edge.data.issue_type else None)
+            issue_percentage = (
+                edge.data.issue_percentage
+                if edge.data.issue_percentage is not None
                 else 0
             )
 
@@ -169,9 +170,16 @@ class MiminetTopology(IPTopo):
                     edge_id,
                     source_id,
                     target_id,
-                    loss_percentage,
+                    # ?????? может нужно сразу класть loss???
+                    issue_type,
+                    issue_percentage
                 )
             )
+
+            if issue_type == "loss":
+                loss_percentage = issue_percentage
+            else:
+                loss_percentage = 0
 
             # Put virtual switch between nodes and return link between them
             link1, link2 = self.addLink(
