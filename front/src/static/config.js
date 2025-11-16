@@ -299,12 +299,14 @@ const ConfigEdgeForm = function (edge_id) {
         let data = $('#config_edge_main_form').serialize();
         const edge = edges.find(e => e.data.id === edge_id);
         console.log(edge);
-        const lossValue = $("#edge_loss").val();
+        const issueType = $("#edge_issue_type").val();
+        const issueValue = $("#edge_issue_percentage").val();
 
         if (edge)
-            edge.data.loss_percentage = lossValue;
+            edge.data.issue_type = issueType;
+            edge.data.issue_percentage = issueValue;
 
-        const inputsToDisable = $('#edge_loss, #config_edge_main_form_submit_button');
+        const inputsToDisable = $('#edge_issue_type, #edge_issue_percentage, #config_edge_main_form_submit_button');
         inputsToDisable.prop("disabled", true);
 
         $('#config_edge_main_form_submit_button').html(
