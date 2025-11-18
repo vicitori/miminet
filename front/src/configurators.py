@@ -418,7 +418,7 @@ class EdgeConfigurator(AbstractDeviceConfigurator):
 
     def _configure(self):
         self._conf_prepare()
-        self._update_loss_percentage()
+        self._update_network_issue()
 
         return {
             "message": "Конфигурация обновлена",
@@ -427,16 +427,16 @@ class EdgeConfigurator(AbstractDeviceConfigurator):
             "jobs": self._json_network["jobs"],
         }
 
-    def _update_loss_percentage(self):
-        loss_percent = get_data("edge_loss")
-
-        loss = int(loss_percent)
-
+    def _update_network_issue(self):
+        issue_type = get_data("edge_issue_type")
+        issue_percent = get_data("edge_issue_percentage")
         edge_id = get_data("edge_id")
 
-        for edge in self._json_network["edges"]:
+        for edge in self._json_network.get("edges"):
             if edge["data"]["id"] == edge_id:
-                edge["data"]["loss_percentage"] = loss
+                edge["data"]["issue_type"] = issue_type
+                edge["data"]["issue_percentage"] = int(issue_percent)
                 break
         else:
-            raise ConfigurationError("Ребро не найдено")
+            raise ConfigurationError(f"Ребро не найдено")
+
