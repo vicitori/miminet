@@ -22,16 +22,14 @@
     </div>
 </script>
 
-<script id="config_edge_network_issues_script" type="text/plain">
-    <div class="form-group mt-4 pt-3 border-top">
-        <h6 id="edge_network_issues_title" class="text-sm mb-3">Настройка сетевых помех</h6>
-        <label class="text-sm">Тип помехи</label>
-        <select for="edge_issue_type" class="form-select form-select-sm" id="edge_issue_type" name="edge_issue_type">
-            <option value="none">-</option>
-            <option value="loss">Потеря пакетов</option>
-            <option value="dup">Дублирование пакетов</option>
-        </select>
-    </div>
+<script id="config_edge_set_network_issues_script" type="text/plain">
+    <h6 id="edge_network_issues_title" class="text-sm mb-3">Настройка сетевых помех</h6>
+    <label class="text-sm">Тип помехи</label>
+    <select for="edge_issue_type" class="form-select form-select-sm" id="edge_issue_type" name="edge_issue_type">
+        <option value="none">-</option>
+        <option value="loss">Потеря пакетов</option>
+        <option value="dup">Дублирование пакетов</option>
+    </select>
     <div class="form-group pb-2" id="edge_issue_percentage_container" style="display: none;">
         <label for="edge_issue_percentage" class="text-sm" id="edge_issue_percentage_label">Интенсивность помех (%)</label>
         <input type="number"

@@ -302,9 +302,10 @@ const ConfigEdgeForm = function (edge_id) {
         const issueType = $("#edge_issue_type").val();
         const issueValue = $("#edge_issue_percentage").val();
 
-        if (edge)
+        if (edge) {
             edge.data.issue_type = issueType;
             edge.data.issue_percentage = issueValue;
+        }
 
         const inputsToDisable = $('#edge_issue_type, #edge_issue_percentage, #config_edge_main_form_submit_button');
         inputsToDisable.prop("disabled", true);
@@ -330,41 +331,35 @@ const ConfigHubName = function (hostname) {
 
 const ConfigEdgeNetworkIssues = function (issues_type, issue_percentage) {
 
-    var text = document.getElementById('config_edge_network_issues_script').innerHTML;
+    var text = document.getElementById('config_edge_set_network_issues_script').innerHTML;
 
     $(config_edge_main_form_id).prepend(text);
 
-    const defaultType = issues_type || 'none';
-    $('#edge_issue_type').val(defaultType);
-    $('#edge_issue_percentage').val(issue_percentage || 0);
-
-    const updatePercentageLabel = function(issueType) {
+    const updatePercentageLabel = function(type) {
         const label = $('#edge_issue_percentage_label');
-        if (issueType === 'loss') {
+        if (type === 'loss') {
             label.text('Процент потерь (%)');
-        } else if (issueType === 'dup') {
+        } else if (type === 'dup') {
             label.text('Процент дублирования (%)');
-        } else {
-            label.text('Интенсивность помех (%)');
         }
     };
 
-    if (defaultType === 'none') {
-        $('#edge_issue_percentage_container').hide();
-    } else {
-        updatePercentageLabel(defaultType);
-        $('#edge_issue_percentage_container').show();
-    }
-
-    $('#edge_issue_type').on('change', function() {
-        const selectedValue = this.value;
-        if (selectedValue === 'none') {
+    const updatePercentageContainer = function(type) {
+        if (type === 'none') {
             $('#edge_issue_percentage_container').hide();
             $('#edge_issue_percentage').val(0);
         } else {
+            updatePercentageLabel(type);
             $('#edge_issue_percentage_container').show();
-            updatePercentageLabel(selectedValue);
         }
+    }
+
+    $('#edge_issue_type').val(issues_type);
+    $('#edge_issue_percentage').val(issue_percentage);
+    updatePercentageContainer(issues_type);
+
+    $('#edge_issue_type').on('change', function() {
+        updatePercentageContainer(this.value);
     });
 };
 
