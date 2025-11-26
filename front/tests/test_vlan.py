@@ -209,6 +209,8 @@ class TestVLAN:
                 "id": "edge_m8llhem5fmccigh4ne",
                 "source": "host_1",
                 "target": "l2sw1",
+                "issue_type": "none",
+                "issue_percentage": 0,
             }
         },
         {
@@ -216,6 +218,8 @@ class TestVLAN:
                 "id": "edge_m8llhevc0plhwsiuw0s",
                 "source": "host_2",
                 "target": "l2sw2",
+                "issue_type": "none",
+                "issue_percentage": 0,
             }
         },
         {
@@ -223,6 +227,8 @@ class TestVLAN:
                 "id": "edge_m8llhf7481nr9ar52fh",
                 "source": "host_3",
                 "target": "l2sw1",
+                "issue_type": "none",
+                "issue_percentage": 0,
             }
         },
         {
@@ -230,6 +236,8 @@ class TestVLAN:
                 "id": "edge_m8llhffak9jd26o49dl",
                 "source": "host_4",
                 "target": "l2sw2",
+                "issue_type": "none",
+                "issue_percentage": 0,
             }
         },
         {
@@ -237,6 +245,8 @@ class TestVLAN:
                 "id": "edge_m8llhfmu0rqjach341i9",
                 "source": "l2sw1",
                 "target": "l2sw2",
+                "issue_type": "none",
+                "issue_percentage": 0,
             }
         },
     ]
