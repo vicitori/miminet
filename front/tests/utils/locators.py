@@ -286,10 +286,14 @@ class Location:
             @staticmethod
             def get_ip_field_xpath(id: int = 0):
                 """XPATH for specific ip address from config panel.
+                Uses a more robust selector: finds all input elements inside the form and treats
+                them as pairs (IP, mask). This avoids relying on fragile div indices.
+
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "IP field can't have index less than 0."
-                return f"/html/body/main/section/div[2]/div[2]/div[2]/form/div[{4 + id * 2}]/input[1]"
+                # Select the (2*id+1)-th input inside the form
+                return f"(//form[contains(@id,'config') or @id='config_host_main_form']//input)[{2*id+1}]"
 
             @staticmethod
             def get_mask_field_xpath(id: int = 0):
@@ -297,7 +301,8 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "Subnet mask field can't have index less than 0."
-                return f"/html/body/main/section/div[2]/div[2]/div[2]/form/div[{4 + id * 2}]/input[2]"
+                # Select the (2*id+2)-th input inside the form
+                return f"(//form[contains(@id,'config') or @id='config_host_main_form']//input)[{2*id+2}]"
 
             MODAL_ERROR_DIALOG = Locator("#config_content > div")
 
