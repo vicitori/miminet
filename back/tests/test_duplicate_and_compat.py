@@ -42,37 +42,20 @@ def test_backward_compatibility_no_loss_no_dup_percentage():
             ), "duplicate_percentage missing in packet config"
 
 
-@pytest.mark.flaky(reruns=1)
-def test_duplicate_increases_packets():
-    net = json.loads(load_file("router_network.json"))
+def test_duplicate_packet_counts():
+    # duplication_network.json already has 100% duplication
+    net_dup = json.loads(load_file("duplication_network.json"))
 
-    if "edges" not in net or not net["edges"]:
-        pytest.skip("No edges in test network")
-
-    # Prepare two variants: no duplicates and with duplicates
-    net_no_dup = json.loads(json.dumps(net))
-    net_dup = json.loads(json.dumps(net))
-
-    # Set duplicate_percentage for all edges accordingly
+    # baseline: set duplicates to 0
+    net_no_dup = json.loads(json.dumps(net_dup))
     for e in net_no_dup.get("edges", []):
-        data = e.setdefault("data", {})
-        data["duplicate_percentage"] = 0
-        data["loss_percentage"] = data.get("loss_percentage", 0)
-
-    for e in net_dup.get("edges", []):
-        data = e.setdefault("data", {})
-        data["duplicate_percentage"] = 80
-        data["loss_percentage"] = data.get("loss_percentage", 0)
+        e.setdefault("data", {})["duplicate_percentage"] = 0
 
     anim_no_dup_json, _ = run_miminet(json.dumps(net_no_dup))
     anim_dup_json, _ = run_miminet(json.dumps(net_dup))
 
-    anim_no_dup = json.loads(anim_no_dup_json)
-    anim_dup = json.loads(anim_dup_json)
+    count_no_dup = sum(len(g) for g in json.loads(anim_no_dup_json))
+    count_dup = sum(len(g) for g in json.loads(anim_dup_json))
 
-    count_no_dup = sum(len(g) for g in anim_no_dup)
-    count_dup = sum(len(g) for g in anim_dup)
-
-    assert (
-        count_dup > count_no_dup
-    ), "Duplicate percentage did not increase number of packets"
+    assert count_no_dup > 0
+    assert count_dup > count_no_dup
