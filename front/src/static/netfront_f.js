@@ -709,8 +709,8 @@ const MoveNodes = function(){
 const prepareStylesheet = function() {
     const getColor = function(ele) {
         if (ele.group() === "edges") {
-            const loss = ele.data('loss_percentage');
-            const dup = ele.data('duplicate_percentage');
+            const loss = ele.data('loss_percentage') || 0;
+            const dup = ele.data('duplicate_percentage') || 0;
             if (loss > 0 && dup > 0) {
                 return '#000000';
             } else if (loss > 0) {
