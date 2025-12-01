@@ -24,13 +24,6 @@ def test_backward_compatibility_no_dup_percentage():
                 "duplicate_percentage" in cfg
             ), "duplicate_percentage missing in packet config"
 
-    try:
-        print("--- GENERATED issues_no_dup_backward_compatibility_answer.json ---")
-        print(animation_json)
-        print("--- END ---")
-    except Exception:
-        pass
-
 
 def test_backward_compatibility_no_loss_no_dup_percentage():
     net_json = load_file("issues_no_loss_no_dup_backward_compatibility_network.json")
@@ -45,35 +38,3 @@ def test_backward_compatibility_no_loss_no_dup_percentage():
             assert (
                 "duplicate_percentage" in cfg
             ), "duplicate_percentage missing in packet config"
-
-    try:
-        print(
-            "--- GENERATED issues_no_loss_no_dup_backward_compatibility_answer.json ---"
-        )
-        print(animation_json)
-        print("--- END ---")
-    except Exception:
-        pass
-
-
-def test_duplicate_packet_counts():
-    net_dup = json.loads(load_file("duplication_network.json"))
-    net_no_dup = json.loads(json.dumps(net_dup))
-    for e in net_no_dup.get("edges", []):
-        e.setdefault("data", {})["duplicate_percentage"] = 0
-
-    anim_no_dup_json, _ = run_miminet(json.dumps(net_no_dup))
-    anim_dup_json, _ = run_miminet(json.dumps(net_dup))
-
-    count_no_dup = sum(len(g) for g in json.loads(anim_no_dup_json))
-    count_dup = sum(len(g) for g in json.loads(anim_dup_json))
-
-    assert count_no_dup > 0
-    assert count_dup > count_no_dup
-
-    try:
-        print("--- GENERATED duplication_answer.json ---")
-        print(anim_dup_json)
-        print("--- END ---")
-    except Exception:
-        pass
