@@ -13,14 +13,26 @@ def load_file(name: str) -> str:
     return path.read_text()
 
 
-def test_backward_compatibility_fields_present():
-    # Network built without explicit loss/duplicate fields
-    net_json = load_file("issues_backward_compatibility_network.json")
+def test_backward_compatibility_no_dup_percentage():
+    net_json = load_file("issues_no_dup_backward_compatibility_network.json")
 
     animation_json, _ = run_miminet(net_json)
     animation = json.loads(animation_json)
 
-    # Ensure every packet entry has loss_percentage and duplicate_percentage in config
+    for packet_group in animation:
+        for pkt in packet_group:
+            cfg = pkt.get("config", {})
+            assert (
+                "duplicate_percentage" in cfg
+            ), "duplicate_percentage missing in packet config"
+
+
+def test_backward_compatibility_no_loss_no_dup_percentage():
+    net_json = load_file("issues_no_loss_no_dup_backward_compatibility_network.json")
+
+    animation_json, _ = run_miminet(net_json)
+    animation = json.loads(animation_json)
+
     for packet_group in animation:
         for pkt in packet_group:
             cfg = pkt.get("config", {})
@@ -32,10 +44,8 @@ def test_backward_compatibility_fields_present():
 
 @pytest.mark.flaky(reruns=1)
 def test_duplicate_increases_packets():
-    # Use a small network from tests and modify one edge to have duplicates
     net = json.loads(load_file("router_network.json"))
 
-    # pick first edge and ensure it exists
     if "edges" not in net or not net["edges"]:
         pytest.skip("No edges in test network")
 

@@ -26,7 +26,7 @@
     }
   ],
   "edges": [
-    {"data": {"id": "edge_1", "source": "host_1", "target": "host_2", "loss_percentage": 0, "duplicate_percentage": 0}}
+    {"data": {"id": "edge_1", "source": "host_1", "target": "host_2", "loss_percentage": 0}}
   ],
   "config": {"zoom": 1, "pan_x": 0, "pan_y": 0},
   "pcap": []
