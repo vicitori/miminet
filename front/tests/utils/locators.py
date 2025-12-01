@@ -48,7 +48,9 @@ class Location:
             Args:
                 id (int): Position of network in networks list. Starts from 0."""
             assert id >= 0, "Network button can't have index less than 0."
-            return f"/html/body/section/div/div/div[{id+2}]"
+            # Use relative path inside section to avoid absolute indexing from /html/body
+            # The networks list is inside a section; pick the N-th child div under that section
+            return f"//section//div[contains(@class,'my-networks-list')]/div[{id+1}]"
 
     class Network:
         """Specific network page."""
@@ -58,7 +60,8 @@ class Location:
         # Network device (or edge) configuration panel
         CONFIG_PANEL = Locator("#config_content")
         # Modal dialog for user warnings
-        MODAL_DIALOG = Locator(xpath="/html/body/div[5]/div")
+        # Prefer matching modal dialogs by class instead of absolute position
+        MODAL_DIALOG = Locator(xpath="(//div[contains(@class,'modal')])[last()]//div[contains(@class,'modal-dialog')]")
         # "Эмулировать"
         EMULATE_BUTTON = Locator("#NetworkEmulateButton", text="Эмулировать")
         # Pause animation button
@@ -289,7 +292,8 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "IP field can't have index less than 0."
-                return f"/html/body/main/section/div[2]/div[2]/div[2]/form/div[{4 + id * 2}]/input[1]"
+                # Find ip input relative to config_content/form; use form-group rows to locate link index
+                return f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[1]"
 
             @staticmethod
             def get_mask_field_xpath(id: int = 0):
@@ -297,7 +301,8 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "Subnet mask field can't have index less than 0."
-                return f"/html/body/main/section/div[2]/div[2]/div[2]/form/div[{4 + id * 2}]/input[2]"
+                # Mask field (second input in the same form-group)
+                return f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[2]"
 
             MODAL_ERROR_DIALOG = Locator("#config_content > div")
 

@@ -328,7 +328,7 @@ const ConfigHubName = function (hostname) {
     $('#config_hub_name').val(hostname);
 }
 
-const ConfigEdgeNetworkIssues = function (edge_loss = 0, edge_duplicate = 0) {
+const ConfigEdgeNetworkIssues = function (edge_loss, edge_duplicate) {
     var text = document.getElementById('config_edge_set_network_issues_script').innerHTML;
     $(config_edge_main_form_id).prepend(text);
     $('#edge_loss').val(edge_loss);
