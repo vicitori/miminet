@@ -25,9 +25,9 @@ def test_backward_compatibility_no_dup_percentage():
             ), "duplicate_percentage missing in packet config"
 
     try:
-        ans_path = TEST_JSON_DIR / "issues_no_dup_backward_compatibility_answer.json"
-        if not ans_path.exists():
-            ans_path.write_text(animation_json)
+        print("--- GENERATED issues_no_dup_backward_compatibility_answer.json ---")
+        print(animation_json)
+        print("--- END ---")
     except Exception:
         pass
 
@@ -46,13 +46,12 @@ def test_backward_compatibility_no_loss_no_dup_percentage():
                 "duplicate_percentage" in cfg
             ), "duplicate_percentage missing in packet config"
 
-    # Save generated answer for this issue network
     try:
-        ans_path = (
-            TEST_JSON_DIR / "issues_no_loss_no_dup_backward_compatibility_answer.json"
+        print(
+            "--- GENERATED issues_no_loss_no_dup_backward_compatibility_answer.json ---"
         )
-        if not ans_path.exists():
-            ans_path.write_text(animation_json)
+        print(animation_json)
+        print("--- END ---")
     except Exception:
         pass
 
@@ -72,10 +71,9 @@ def test_duplicate_packet_counts():
     assert count_no_dup > 0
     assert count_dup > count_no_dup
 
-    ans_path = TEST_JSON_DIR / "duplication_answer.json"
     try:
-        if not ans_path.exists():
-            ans_path.write_text(anim_dup_json)
+        print("--- GENERATED duplication_answer.json ---")
+        print(anim_dup_json)
+        print("--- END ---")
     except Exception:
-        # Don't fail test if writing fails
         pass
