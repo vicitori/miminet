@@ -127,7 +127,18 @@ def create_animation(
                     source = cfg.get("source")
                     target = cfg.get("target")
                     ts = pkt.get("timestamp", "")
-                    key = (label, path, source, target, ts)
+# Very small normalization: round timestamp to nearest 1 microsecond (maximally precise)
+                    try:
+                        if ts:
+                            ts_int = int(ts)
+                            # rounding to 1 microsecond is effectively keeping the integer value
+                            ts_norm = str((ts_int // 1) * 1)
+                        else:
+                            ts_norm = ts
+                    except Exception:
+                        ts_norm = ts
+
+                    key = (label, path, source, target, ts_norm)
                 except Exception:
                     # Fallback: stringify packet
                     key = tuple(sorted(pkt.items()))
