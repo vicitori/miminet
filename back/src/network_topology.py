@@ -19,6 +19,7 @@ class MiminetTopology(IPTopo):
         # Minimum suitable time for which the network is configured
         self.__network_configuration_time = 3
 
+
         self.__network: Network = network
         self.__nodes: dict = {}
         self.__id_to_node: dict[str, Node] = {}
