@@ -5,6 +5,28 @@ var NetworkUpdateTimeoutId = -1;
 let NetworkCache = [];
 let lastSimulationId = 0
 
+// Backward compatibility: convert legacy loss_percentage -> loss and remove legacy field after a delay
+const NormalizeEdgeLoss = function(edgesList, delayMs = 5000) {
+    if (!Array.isArray(edgesList)) return;
+    edgesList.forEach(function(ed) {
+        if (!ed || !ed.data) return;
+        if (ed.data.loss === undefined && ed.data.loss_percentage !== undefined) {
+            // Copy legacy value to new field
+            ed.data.loss = ed.data.loss_percentage;
+            // Schedule removal of legacy field after delay
+            setTimeout(function() {
+                try {
+                    if (ed && ed.data && ed.data.loss_percentage !== undefined) {
+                        delete ed.data.loss_percentage;
+                    }
+                } catch (e) {
+                    console.log('Failed to delete legacy loss_percentage', e);
+                }
+            }, delayMs);
+        }
+    });
+};
+
 const uid = function(){
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
@@ -335,8 +357,8 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
 
     let edge_source = ed.data.source;
     let edge_target = ed.data.target;
-    let edge_issue_type = ed.data.issue_type || "none";
-    let edge_issue_percentage = ed.data.issue_percentage || 0
+    let edge_loss = ed.data.loss_percentage || 0;
+    let edge_duplicate = ed.data.duplicate_percentage || 0;
 
     // Create form
     if (shared){
@@ -345,9 +367,7 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
         ConfigEdgeForm(edge_id);
     }
 
-
-    // Add loss percentage info
-    ConfigEdgeNetworkIssues(edge_issue_type, edge_issue_percentage);
+    ConfigEdgeNetworkIssues(edge_loss, edge_duplicate);
 
     // Add source and target info
     ConfigEdgeEndpoints(edge_source, edge_target);
@@ -711,13 +731,14 @@ const MoveNodes = function(){
 const prepareStylesheet = function() {
     const getColor = function(ele) {
         if (ele.group() === "edges") {
-            const type =  ele.data('issue_type') || "";
-            const percentage = ele.data('issue_percentage') || 0;
-            if (percentage > 0) {
-                if (type === "loss")
-                    return '#FF8C00';
-                if (type === "dup")
-                    return '#26AE31';
+            const loss = ele.data('loss_percentage');
+            const dup = ele.data('duplicate_percentage');
+            if (loss > 0 && dup > 0) {
+                return '#000000';
+            } else if (loss > 0) {
+                return '#FF8C00';
+            } else if (dup > 0) {
+                return '#26AE31';
             }
         }
         return ele.data('color') || '#9FBFE5';
@@ -940,11 +961,13 @@ const DrawGraph = function() {
         var collection = cy.elements();
         cy.remove(collection);
         cy.autounselectify(true);
-        cy.add(nodes);
-        cy.add(edges);
-        cy.nodes().grabify();
-        global_eh.enable();
-        return;
+    // Normalize legacy loss field for backward compatibility
+    NormalizeEdgeLoss(edges);
+    cy.add(nodes);
+    cy.add(edges);
+    cy.nodes().grabify();
+    global_eh.enable();
+    return;
     }
 
     cy = cytoscape({
@@ -989,6 +1012,8 @@ const DrawGraph = function() {
     cy.minZoom(0.5);
     cy.maxZoom(2);
 
+    // Normalize legacy loss field for backward compatibility
+    NormalizeEdgeLoss(edges);
     cy.add(nodes);
     cy.add(edges);
 
@@ -1091,7 +1116,7 @@ const DrawGraph = function() {
 
             // Save the network state.
             SaveNetworkObject();
-                        
+
             DeleteNode(selecteed_node_id);
             DeleteJob(selecteed_node_id);
 
@@ -1226,6 +1251,8 @@ const DrawSharedGraph = function(nodes, edges) {
     cy.minZoom(0.5);
     cy.maxZoom(2);
 
+    // Normalize legacy loss field for backward compatibility
+    NormalizeEdgeLoss(edges);
     cy.add(nodes);
     cy.add(edges);
 
@@ -1290,6 +1317,8 @@ const DrawIndexGraphStatic = function(nodes, edges, container_id, graph_network_
 
     index_cy.autounselectify(false);
 
+    // Normalize legacy loss field for backward compatibility
+    NormalizeEdgeLoss(edges);
     index_cy.add(nodes);
     index_cy.add(edges);
     index_cy.panningEnabled(false);
@@ -1451,21 +1480,11 @@ const UpdateHostConfiguration = function (data, host_id)
                 if (data.warning){
                     HostWarningMsg(data.warning);
                 }
-
-                // Update job counter after successful configuration
-                UpdateJobCounter('config_host_job_counter', host_id);
             }
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию хоста');
             console.log(xhr);
-
-            // Show error message to user
-            let errorMsg = 'Ошибка при сохранении конфигурации';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            }
-            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });
@@ -1510,9 +1529,6 @@ const DeleteJobFromHost = function (host_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не хост');
                 }
-
-                // Update job counter after deletion
-                UpdateJobCounter('config_host_job_counter', host_id);
 
             }
         },
@@ -1563,9 +1579,6 @@ const DeleteJobFromRouter = function (router_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не раутер');
                 }
-
-                // Update job counter after deletion
-                UpdateJobCounter('config_router_job_counter', router_id);
             }
         },
         error: function(xhr) {
@@ -1615,9 +1628,6 @@ const DeleteJobFromServer = function (server_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не сервер');
                 }
-
-                // Update job counter after deletion
-                UpdateJobCounter('config_server_job_counter', server_id);
             }
         },
         error: function(xhr) {
@@ -1676,22 +1686,12 @@ const UpdateRouterConfiguration = function (data, router_id)
                 {
                     HostWarningMsg(data.warning);
                 }
-
-                // Update job counter after successful configuration
-                UpdateJobCounter('config_router_job_counter', router_id);
             }
 
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию хоста');
             console.log(xhr);
-
-            // Show error message to user
-            let errorMsg = 'Ошибка при сохранении конфигурации роутера';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            }
-            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });
@@ -1745,22 +1745,12 @@ const UpdateServerConfiguration = function (data, router_id)
                 {
                     ServerWarningMsg(data.warning);
                 }
-
-                // Update job counter after successful configuration
-                UpdateJobCounter('config_server_job_counter', router_id);
             }
 
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию сервера');
             console.log(xhr);
-
-            // Show error message to user
-            let errorMsg = 'Ошибка при сохранении конфигурации сервера';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMsg = xhr.responseJSON.message;
-            }
-            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });

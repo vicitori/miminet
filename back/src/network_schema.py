@@ -44,7 +44,7 @@ class NodeInterface:
     Represents an interface of a network node.
 
     Attributes:
-        connect (str): Unique identifier of the edge the interface connects to (e.g., "edge_lecszk09edp01gxyfdw").
+        connect (str): Label of the node the interface connects to (e.g., "l2sw1").
         id (str): Unique identifier for the interface (e.g., "l2sw1_1").
         name (str): Name of the interface (e.g., "l2sw1_1").
         ip (str): IP address (e.g., "10.0.0.1").
@@ -114,8 +114,8 @@ class EdgeData:
     id: str
     source: str
     target: str
-    issue_type: str
-    issue_percentage: int
+    loss_percentage: int = 0
+    duplicate_percentage: int = 0
 
 
 @dataclass

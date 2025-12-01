@@ -131,7 +131,28 @@
     var network_pan_y = {{ network_config.pan_y}};
 
     var nodes = {{ nodes | safe }};
-    const edges = {{ edges | safe }};
+    var edges = {{ edges | safe }};
+
+    // Normalize edges: ensure legacy loss/duplicate fields exist and remove issue_* keys
+    if (Array.isArray(edges)) {
+        edges.forEach(function(ed) {
+            if (!ed || !ed.data) return;
+
+            let loss = parseInt(ed.data.loss) || 0;
+            let dup = parseInt(ed.data.duplicate) || 0;
+
+            if (loss < 0) loss = 0;
+            if (loss > 100) loss = 100;
+            if (dup < 0) dup = 0;
+            if (dup > 100) dup = 100;
+
+            ed.data.loss = loss;
+            ed.data.duplicate = dup;
+
+            if ('issue_type' in ed.data) delete ed.data.issue_type;
+            if ('issue_percent' in ed.data) delete ed.data.issue_percent;
+        });
+    }
     var jobs = {{ jobs | safe }};
     var packets = {{ packets | safe }};
     var pcaps = {{ pcaps | safe }};

@@ -428,15 +428,14 @@ class EdgeConfigurator(AbstractDeviceConfigurator):
         }
 
     def _update_network_issue(self):
-        issue_type = get_data("edge_issue_type")
-        issue_percent = get_data("edge_issue_percentage")
+        loss = int(get_data("edge_loss"))
+        duplicate = int(get_data("edge_duplicate"))
         edge_id = get_data("edge_id")
 
-        for edge in self._json_network.get("edges"):
+        for edge in self._json_network["edges"]:
             if edge["data"]["id"] == edge_id:
-                edge["data"]["issue_type"] = issue_type
-                edge["data"]["issue_percentage"] = int(issue_percent)
+                edge["data"]["loss_percentage"] = loss
+                edge["data"]["duplicate_percentage"] = duplicate
                 break
         else:
-            raise ConfigurationError(f"Ребро не найдено")
-
+            raise ConfigurationError("Ребро не найдено")

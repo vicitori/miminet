@@ -1,7 +1,7 @@
 <script id="config_edge_main_form_script" type="text/plain">
     <form id='config_edge_main_form' action='' method='POST' onkeydown="return event.key != 'Enter';">
-        <input type="hidden" id="edge_id" name="edge_id" value="\"\""/>
-        <input type="hidden" id="net_guid" name="net_guid" value="\"\""/>
+        <input type="hidden" id="edge_id" name="edge_id" value=""/>
+        <input type="hidden" id="net_guid" name="net_guid" value=""/>
         <button id="config_edge_end_form" type="submit" style="display: none;"></button>
     </form>
 </script>
@@ -23,25 +23,35 @@
 </script>
 
 <script id="config_edge_set_network_issues_script" type="text/plain">
-    <h6 id="edge_network_issues_title" class="text-sm mb-3">Настройка сетевых помех</h6>
-    <label class="text-sm">Тип помехи</label>
-    <select for="edge_issue_type" class="form-select form-select-sm" id="edge_issue_type" name="edge_issue_type">
-        <option value="none">-</option>
-        <option value="loss">Потеря пакетов</option>
-        <option value="dup">Дублирование пакетов</option>
-    </select>
-    <div class="form-group pb-2" id="edge_issue_percentage_container" style="display: none;">
-        <label for="edge_issue_percentage" class="text-sm" id="edge_issue_percentage_label">Интенсивность помех (%)</label>
-        <input type="number"
-               id="edge_issue_percentage"
-               class="form-control form-control-sm"
-               name="edge_issue_percentage"
-               min="0"
-               max="100"
-               step="1"
-               placeholder="0"
-               oninput="this.value = this.value.replace(/[^0-9]/g, '');
-                        this.value = Math.max(0, Math.min(100, parseInt(this.value) || 0));"
-               value="{{ edge.data.issue_percentage }}">
+    <div class="form-group pb-2">
+        <div class="form-group pb-2">
+            <label for="edge_loss" class="text-sm">Потери пакетов (%)</label>
+            <input type="number"
+                   id="edge_loss"
+                   class="form-control form-control-sm"
+                   name="edge_loss"
+                   min="0"
+                   max="100"
+                   step="1"
+                   placeholder="0"
+                   oninput="this.value = this.value.replace(/[^0-9]/g, '');
+                            this.value = Math.max(0, Math.min(100, parseInt(this.value) || 0));"
+                   value="{{ edge.data.loss_percentage if edge and edge.data else 0 }}">
+        </div>
+
+        <div class="form-group pb-2">
+            <label for="edge_duplicate" class="text-sm">Дублирование пакетов (%)</label>
+            <input type="number"
+                   id="edge_duplicate"
+                   class="form-control form-control-sm"
+                   name="edge_duplicate"
+                   min="0"
+                   max="100"
+                   step="1"
+                   placeholder="0"
+                   oninput="this.value = this.value.replace(/[^0-9]/g, '');
+                            this.value = Math.max(0, Math.min(100, parseInt(this.value) || 0));"
+                   value="{{ edge.data.duplicate_percentage if edge and edge.data else 0 }}">
+        </div>
     </div>
 </script>

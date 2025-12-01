@@ -136,10 +136,14 @@ class MiminetTopology(IPTopo):
             edge_id = edge.data.id
             source_id = edge.data.source
             target_id = edge.data.target
-            issue_type = (edge.data.issue_type if edge.data.issue_type else None)
-            issue_percentage = (
-                edge.data.issue_percentage
-                if edge.data.issue_percentage is not None
+            loss_percentage = (
+                edge.data.loss_percentage
+                if edge.data.loss_percentage is not None
+                else 0
+            )
+            duplicate_percentage = (
+                edge.data.duplicate_percentage
+                if edge.data.duplicate_percentage is not None
                 else 0
             )
 
@@ -170,16 +174,10 @@ class MiminetTopology(IPTopo):
                     edge_id,
                     source_id,
                     target_id,
-                    # ?????? может нужно сразу класть loss???
-                    issue_type,
-                    issue_percentage
+                    loss_percentage,
+                    duplicate_percentage,
                 )
             )
-
-            if issue_type == "loss":
-                loss_percentage = issue_percentage
-            else:
-                loss_percentage = 0
 
             # Put virtual switch between nodes and return link between them
             link1, link2 = self.addLink(
@@ -189,6 +187,7 @@ class MiminetTopology(IPTopo):
                 interface_name_2=trg_iface.name,
                 delay="15ms",
                 loss_percentage=loss_percentage,
+                duplicate_percentage=duplicate_percentage,
             )
 
             self.__configure_link(link1[src_host], src_iface)
@@ -219,6 +218,7 @@ class MiminetTopology(IPTopo):
         delay="2ms",
         max_queue_size=None,
         loss_percentage=0,
+        duplicate_percentage=0,
     ):
         """Connects two hosts through a virtual switch."""
         # Create unique switch name
@@ -233,6 +233,7 @@ class MiminetTopology(IPTopo):
                 "delay": delay,
                 "max_queue_size": max_queue_size,
                 "loss": loss_percentage,
+                "duplicate": duplicate_percentage,
             }
         }
 
@@ -241,6 +242,7 @@ class MiminetTopology(IPTopo):
                 "delay": delay,
                 "max_queue_size": max_queue_size,
                 "loss": loss_percentage,
+                "duplicate": duplicate_percentage,
             }
         }
 

@@ -299,15 +299,14 @@ const ConfigEdgeForm = function (edge_id) {
         let data = $('#config_edge_main_form').serialize();
         const edge = edges.find(e => e.data.id === edge_id);
         console.log(edge);
-        const issueType = $("#edge_issue_type").val();
-        const issueValue = $("#edge_issue_percentage").val();
+        const lossValue = $("#edge_loss").val();
+        const duplicateValue = $("#edge_duplicate").val();
 
         if (edge) {
-            edge.data.issue_type = issueType;
-            edge.data.issue_percentage = issueValue;
+            edge.data.loss_percentage = lossValue;
+            edge.data.duplicate_percentage = duplicateValue;
         }
-
-        const inputsToDisable = $('#edge_issue_type, #edge_issue_percentage, #config_edge_main_form_submit_button');
+        const inputsToDisable = $('#edge_loss, #edge_duplicate, #config_edge_main_form_submit_button');
         inputsToDisable.prop("disabled", true);
 
         $('#config_edge_main_form_submit_button').html(
@@ -329,38 +328,12 @@ const ConfigHubName = function (hostname) {
     $('#config_hub_name').val(hostname);
 }
 
-const ConfigEdgeNetworkIssues = function (issues_type, issue_percentage) {
-
+const ConfigEdgeNetworkIssues = function (edge_loss, edge_duplicate) {
     var text = document.getElementById('config_edge_set_network_issues_script').innerHTML;
 
     $(config_edge_main_form_id).prepend(text);
-
-    const updatePercentageLabel = function(type) {
-        const label = $('#edge_issue_percentage_label');
-        if (type === 'loss') {
-            label.text('Процент потерь (%)');
-        } else if (type === 'dup') {
-            label.text('Процент дублирования (%)');
-        }
-    };
-
-    const updatePercentageContainer = function(type) {
-        if (type === 'none') {
-            $('#edge_issue_percentage_container').hide();
-            $('#edge_issue_percentage').val(0);
-        } else {
-            updatePercentageLabel(type);
-            $('#edge_issue_percentage_container').show();
-        }
-    }
-
-    $('#edge_issue_type').val(issues_type);
-    $('#edge_issue_percentage').val(issue_percentage);
-    updatePercentageContainer(issues_type);
-
-    $('#edge_issue_type').on('change', function() {
-        updatePercentageContainer(this.value);
-    });
+    $('#edge_loss').val(edge_loss);
+    $('#edge_duplicate').val(edge_duplicate);
 };
 
 const ConfigEdgeEndpoints = function (edge_source, edge_target) {
