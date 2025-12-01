@@ -111,7 +111,6 @@ TEST_CASES = [Case(*read_files(n, a)) for n, a in TEST_FILES]
 
 
 @pytest.mark.parametrize("test", TEST_CASES)
-@pytest.mark.flaky(reruns=2)
 def test_miminet_work(test: Case, request) -> None:
     """Test network emulation using Mininet."""
     info(f"Running test: {request.node.name}.")
