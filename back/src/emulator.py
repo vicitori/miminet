@@ -114,43 +114,7 @@ def create_animation(
             duplicate_percentage,
         )
 
-        # Deduplicate exact mirrored packets coming from both capture files.
-        # Use a stable key built from label, path, source, target and timestamp.
-        if packets:
-            seen = set()
-            unique_packets = []
-            for pkt in packets:
-                try:
-                    label = pkt.get("data", {}).get("label")
-                    cfg = pkt.get("config", {})
-                    path = cfg.get("path")
-                    source = cfg.get("source")
-                    target = cfg.get("target")
-                    ts = pkt.get("timestamp", "")
-                    # Very small normalization: round timestamp to nearest 1 microsecond (maximally precise)
-                    try:
-                        if ts:
-                            ts_int = int(ts)
-                            # rounding to 1 microsecond is effectively keeping the integer value
-                            ts_norm = str((ts_int // 1) * 1)
-                        else:
-                            ts_norm = ts
-                    except Exception:
-                        ts_norm = ts
-
-                    key = (label, path, source, target, ts_norm)
-                except Exception:
-                    # Fallback: stringify packet
-                    key = tuple(sorted(pkt.items()))
-
-                if key in seen:
-                    continue
-                seen.add(key)
-                unique_packets.append(pkt)
-
-            animation += unique_packets
-        else:
-            pass
+        animation += packets
 
     return animation, pcap_list
 
