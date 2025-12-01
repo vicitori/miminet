@@ -233,7 +233,7 @@ class MiminetTopology(IPTopo):
                 "delay": delay,
                 "max_queue_size": max_queue_size,
                 "loss": loss_percentage,
-                "duplicate": duplicate_percentage,
+                "duplicate": duplicate_percentage
             }
         }
 
@@ -242,7 +242,7 @@ class MiminetTopology(IPTopo):
                 "delay": delay,
                 "max_queue_size": max_queue_size,
                 "loss": loss_percentage,
-                "duplicate": duplicate_percentage,
+                "duplicate": duplicate_percentage
             }
         }
 
