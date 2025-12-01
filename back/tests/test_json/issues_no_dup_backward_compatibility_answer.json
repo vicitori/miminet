@@ -2,7 +2,14 @@
   [
     {
       "data": {"id": "", "label": "ICMP echo-request\\n192.168.1.1 > 192.168.1.2", "type": "packet"},
-      "config": {"type": "ICMP echo-request\\n192.168.1.1 > 192.168.1.2", "path": "edge_1", "source": "host_1", "target": "host_2", "loss_percentage": 0},
+      "config": {"type": "ICMP echo-request\\n192.168.1.1 > 192.168.1.2", "path": "edge_1", "source": "host_1", "target": "hub_1", "loss_percentage": 0},
+      "timestamp": ""
+    }
+  ],
+  [
+    {
+      "data": {"id": "", "label": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "type": "packet"},
+      "config": {"type": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "path": "edge_1", "source": "hub_1", "target": "host_1", "loss_percentage": 0},
       "timestamp": ""
     }
   ],
