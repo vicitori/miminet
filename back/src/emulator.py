@@ -127,7 +127,7 @@ def create_animation(
                     source = cfg.get("source")
                     target = cfg.get("target")
                     ts = pkt.get("timestamp", "")
-# Very small normalization: round timestamp to nearest 1 microsecond (maximally precise)
+                    # Very small normalization: round timestamp to nearest 1 microsecond (maximally precise)
                     try:
                         if ts:
                             ts_int = int(ts)
