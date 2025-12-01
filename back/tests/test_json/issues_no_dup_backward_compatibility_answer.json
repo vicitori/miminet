@@ -12,5 +12,26 @@
       "config": {"type": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "path": "edge_1", "source": "host_2", "target": "host_1"},
       "timestamp": ""
     }
+  ],
+  [
+    {
+      "data": {"id": "", "label": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "type": "packet"},
+      "config": {"type": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "path": "edge_1", "source": "host_2", "target": "host_1"},
+      "timestamp": ""
+    }
+  ],
+  [
+    {
+      "data": {"id": "", "label": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "type": "packet"},
+      "config": {"type": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "path": "edge_1", "source": "host_2", "target": "host_1"},
+      "timestamp": ""
+    }
+  ],
+  [
+    {
+      "data": {"id": "", "label": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "type": "packet"},
+      "config": {"type": "ICMP echo-reply\\n192.168.1.2 > 192.168.1.1", "path": "edge_1", "source": "host_2", "target": "host_1"},
+      "timestamp": ""
+    }
   ]
 ]
