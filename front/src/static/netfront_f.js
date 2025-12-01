@@ -335,8 +335,7 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
 
     let edge_source = ed.data.source;
     let edge_target = ed.data.target;
-    let edge_loss = ed.data.loss_percentage || 0;
-    let edge_duplicate = ed.data.duplicate_percentage || 0;
+    let edge_loss = ed.data.loss_percentage || 0
 
     // Create form
     if (shared){
@@ -345,7 +344,9 @@ const ShowEdgeConfig = function(edge_id, shared = 0){
         ConfigEdgeForm(edge_id);
     }
 
-    ConfigEdgeNetworkIssues(edge_loss, edge_duplicate);
+
+    // Add loss percentage info
+    ConfigEdgePercentage(edge_loss)
 
     // Add source and target info
     ConfigEdgeEndpoints(edge_source, edge_target);
@@ -710,14 +711,8 @@ const prepareStylesheet = function() {
     const getColor = function(ele) {
         if (ele.group() === "edges") {
             const loss = ele.data('loss_percentage') || 0;
-            const dup = ele.data('duplicate_percentage') || 0;
-            if (loss > 0 && dup > 0) {
-                return '#000000';
-            } else if (loss > 0) {
+            if (loss > 0)
                 return '#FF8C00';
-            } else if (dup > 0) {
-                return '#26AE31';
-            }
         }
         return ele.data('color') || '#9FBFE5';
     };
@@ -987,6 +982,7 @@ const DrawGraph = function() {
 
     cy.minZoom(0.5);
     cy.maxZoom(2);
+
     cy.add(nodes);
     cy.add(edges);
 
@@ -1223,6 +1219,7 @@ const DrawSharedGraph = function(nodes, edges) {
 
     cy.minZoom(0.5);
     cy.maxZoom(2);
+
     cy.add(nodes);
     cy.add(edges);
 
@@ -1286,6 +1283,7 @@ const DrawIndexGraphStatic = function(nodes, edges, container_id, graph_network_
         });
 
     index_cy.autounselectify(false);
+
     index_cy.add(nodes);
     index_cy.add(edges);
     index_cy.panningEnabled(false);

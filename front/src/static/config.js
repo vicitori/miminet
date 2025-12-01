@@ -299,14 +299,12 @@ const ConfigEdgeForm = function (edge_id) {
         let data = $('#config_edge_main_form').serialize();
         const edge = edges.find(e => e.data.id === edge_id);
         console.log(edge);
-        const lossValue = parseInt($("#edge_loss").val(), 10) || 0;
-        const duplicateValue = parseInt($("#edge_duplicate").val(), 10) || 0;
+        const lossValue = $("#edge_loss").val();
 
-        if (edge) {
+        if (edge)
             edge.data.loss_percentage = lossValue;
-            edge.data.duplicate_percentage = duplicateValue;
-        }
-        const inputsToDisable = $('#edge_loss, #edge_duplicate, #config_edge_main_form_submit_button');
+
+        const inputsToDisable = $('#edge_loss, #config_edge_main_form_submit_button');
         inputsToDisable.prop("disabled", true);
 
         $('#config_edge_main_form_submit_button').html(
@@ -328,13 +326,13 @@ const ConfigHubName = function (hostname) {
     $('#config_hub_name').val(hostname);
 }
 
-const ConfigEdgeNetworkIssues = function (edge_loss, edge_duplicate) {
-    var text = document.getElementById('config_edge_set_network_issues_script').innerHTML;
+const ConfigEdgePercentage = function (edge_loss) {
+
+    var text = document.getElementById('config_edge_save_loss_script').innerHTML;
 
     $(config_edge_main_form_id).prepend(text);
     $('#edge_loss').val(edge_loss);
-    $('#edge_duplicate').val(edge_duplicate);
-};
+}
 
 const ConfigEdgeEndpoints = function (edge_source, edge_target) {
 
@@ -576,13 +574,13 @@ const ConfigSwitchIndent = function () {
 const addIpFieldHandlers = function () {
     document.addEventListener('input', function (e) {
         const input = e.target;
- 
+
         if (!input.matches('input[type="text"][id*="ip"], input[type="text"][name*="ip"]')) {
             return;
         }
- 
+
         const newValue = input.value.replace(/,/g, '.').replace(/ю/g, '.');
- 
+
         input.value = newValue;
     });
 };
@@ -632,7 +630,7 @@ const ConfigHostJobOnChange = function (evnt) {
         case '103':
             UpdateHostForm('config_host_add_arp_cache_script');
             break;
-        
+
         case '108':
             UpdateHostForm('config_host_add_dhclient');
             FillDeviceSelectIntf('#config_host_add_dhclient_interface_select_iface_field', '#host_id', "Выберите линк", false)
@@ -741,12 +739,12 @@ const ConfigRouterJobOnChange = function(evnt) {
             break;
         case '1':
             UpdateRouterForm('config_router_ping_c_1_script');
-        
+
             break;
         case '100':
             UpdateRouterForm('config_router_add_ip_mask_script');
             FillDeviceSelectIntf("#config_router_add_ip_mask_iface_select_field", '#router_id', "Выберите линк", false);
-        
+
             break;
         case '101':
             UpdateRouterForm('config_router_add_nat_masquerade_script');
@@ -941,7 +939,7 @@ const ConfigServerJobOnChange = function (evnt) {
         case '202':
             UpdateServerForm('config_server_block_tcp_udp_port_script');
             break;
-        
+
         case '203':
             UpdateServerForm('config_server_add_dhcp_server_script');
             FillDeviceSelectIntf('#config_server_add_dhcp_interface_select_iface_field', '#server_id', "Выберите линк", false)
@@ -1001,7 +999,7 @@ const FillDeviceSelectIntf = function(select_id, device, field_msg = 'Интер
     }
 
     device_node = nodes.find(n => n.data.id === device_id);
-    
+
     if (!device_node) {
         console.log("Не нашел device_node");
         return;
