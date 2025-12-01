@@ -33,74 +33,90 @@ class TestDuplicateFront:
 
         network.delete()
 
-    def test_duplicate_doubles_packets(self, selenium: MiminetTester, network: MiminetTestNetwork):
+    def test_duplicate_doubles_packets(
+        self, selenium: MiminetTester, network: MiminetTestNetwork
+    ):
         # Baseline: both edges duplicate = 0
         for edge in network.edges:
             selenium.execute_script(f"ShowEdgeConfig('{edge['data']['id']}')")
             selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
             selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-            selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+            selenium.find_element(
+                By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+            ).click()
 
         packets_no_dup = network.run_emulation()
         count_no_dup = sum(len(group) for group in packets_no_dup)
 
         # Case A: duplicate on first edge only
         # Set edge1 = 100, edge2 = 0
-        edge1_id = network.edges[0]['data']['id']
-        edge2_id = network.edges[1]['data']['id']
+        edge1_id = network.edges[0]["data"]["id"]
+        edge2_id = network.edges[1]["data"]["id"]
 
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         packets_first_dup = network.run_emulation()
         count_first_dup = sum(len(group) for group in packets_first_dup)
 
         # Expect doubling after first edge
-        assert count_first_dup == 2 * count_no_dup, (
-            f"Expected packets with duplication on first edge ({count_first_dup}) to be exactly twice packets without duplication ({count_no_dup})"
-        )
+        assert (
+            count_first_dup == 2 * count_no_dup
+        ), f"Expected packets with duplication on first edge ({count_first_dup}) to be exactly twice packets without duplication ({count_no_dup})"
 
         # Case B: duplicate on second edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         packets_second_dup = network.run_emulation()
         count_second_dup = sum(len(group) for group in packets_second_dup)
 
         # Expect doubling after second edge
-        assert count_second_dup == 2 * count_no_dup, (
-            f"Expected packets with duplication on second edge ({count_second_dup}) to be exactly twice packets without duplication ({count_no_dup})"
-        )
+        assert (
+            count_second_dup == 2 * count_no_dup
+        ), f"Expected packets with duplication on second edge ({count_second_dup}) to be exactly twice packets without duplication ({count_no_dup})"
 
         # Case C: duplicate on both edges
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
         selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, "#config_edge_main_form_submit_button").click()
+        selenium.find_element(
+            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
+        ).click()
 
         packets_both_dup = network.run_emulation()
         count_both_dup = sum(len(group) for group in packets_both_dup)
 
         # Expect doubling on both edges -> 4x
-        assert count_both_dup == 4 * count_no_dup, (
-            f"Expected packets with duplication on both edges ({count_both_dup}) to be exactly 4x packets without duplication ({count_no_dup})"
-        )
+        assert (
+            count_both_dup == 4 * count_no_dup
+        ), f"Expected packets with duplication on both edges ({count_both_dup}) to be exactly 4x packets without duplication ({count_no_dup})"

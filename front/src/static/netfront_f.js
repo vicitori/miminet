@@ -1353,20 +1353,6 @@ const UpdateEdgeConfiguration = (data) => {
     });
 };
 
-//const NormalizeEdgeIssues = function(edgesList, delayMs = 5000) {
-//    if (!Array.isArray(edgesList)) return;
-//    edgesList.forEach(function(ed) {
-//        if (!ed || !ed.data) return;
-//        // Ensure duplicate_percentage is present
-//        if (ed.data.duplicate_percentage === undefined || ed.data.duplicate_percentage === null) {
-//            ed.data.duplicate_percentage = 0;
-//        }
-//        // If loss_percentage is missing, default to 0
-//        if (ed.data.loss_percentage === undefined || ed.data.loss_percentage === null) {
-//            ed.data.loss_percentage = 0;
-//        }
-//    });
-//};
 
 const InsertWaitingTime = function ()
 {
@@ -1461,11 +1447,21 @@ const UpdateHostConfiguration = function (data, host_id)
                 if (data.warning){
                     HostWarningMsg(data.warning);
                 }
+
+                // Update job counter after successful configuration
+                UpdateJobCounter('config_host_job_counter', host_id);
             }
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию хоста');
             console.log(xhr);
+
+            // Show error message to user
+            let errorMsg = 'Ошибка при сохранении конфигурации';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });
@@ -1510,6 +1506,9 @@ const DeleteJobFromHost = function (host_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не хост');
                 }
+
+                // Update job counter after deletion
+                UpdateJobCounter('config_host_job_counter', host_id);
 
             }
         },
@@ -1560,6 +1559,9 @@ const DeleteJobFromRouter = function (router_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не раутер');
                 }
+
+                // Update job counter after deletion
+                UpdateJobCounter('config_router_job_counter', router_id);
             }
         },
         error: function(xhr) {
@@ -1609,6 +1611,9 @@ const DeleteJobFromServer = function (server_id, job_id, network_guid)
                 } else {
                     ClearConfigForm('Узел есть, но это не сервер');
                 }
+
+                // Update job counter after deletion
+                UpdateJobCounter('config_server_job_counter', server_id);
             }
         },
         error: function(xhr) {
@@ -1667,12 +1672,22 @@ const UpdateRouterConfiguration = function (data, router_id)
                 {
                     HostWarningMsg(data.warning);
                 }
+
+                // Update job counter after successful configuration
+                UpdateJobCounter('config_router_job_counter', router_id);
             }
 
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию хоста');
             console.log(xhr);
+
+            // Show error message to user
+            let errorMsg = 'Ошибка при сохранении конфигурации роутера';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });
@@ -1726,12 +1741,22 @@ const UpdateServerConfiguration = function (data, router_id)
                 {
                     ServerWarningMsg(data.warning);
                 }
+
+                // Update job counter after successful configuration
+                UpdateJobCounter('config_server_job_counter', router_id);
             }
 
         },
         error: function(xhr) {
             console.log('Не удалось обновить конфигурацию сервера');
             console.log(xhr);
+
+            // Show error message to user
+            let errorMsg = 'Ошибка при сохранении конфигурации сервера';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            HostErrorMsg(errorMsg);
         },
         dataType: 'json'
     });
