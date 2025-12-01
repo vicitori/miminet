@@ -25,7 +25,9 @@ def test_backward_compatibility_fields_present():
         for pkt in packet_group:
             cfg = pkt.get("config", {})
             assert "loss_percentage" in cfg, "loss_percentage missing in packet config"
-            assert "duplicate_percentage" in cfg, "duplicate_percentage missing in packet config"
+            assert (
+                "duplicate_percentage" in cfg
+            ), "duplicate_percentage missing in packet config"
 
 
 @pytest.mark.flaky(reruns=1)
@@ -61,4 +63,6 @@ def test_duplicate_increases_packets():
     count_no_dup = sum(len(g) for g in anim_no_dup)
     count_dup = sum(len(g) for g in anim_dup)
 
-    assert count_dup > count_no_dup, "Duplicate percentage did not increase number of packets"
+    assert (
+        count_dup > count_no_dup
+    ), "Duplicate percentage did not increase number of packets"
