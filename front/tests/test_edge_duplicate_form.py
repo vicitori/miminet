@@ -22,11 +22,10 @@ class TestEdgeDuplicateForm:
 
         network.open_edge_config(edge)
 
-        selenium.execute_script("$('#edge_duplicate').val(42).trigger('input')")
-
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        # set value using JS then click submit via centralized locator
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("42")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         selenium.wait_for(
             lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 42
@@ -41,28 +40,25 @@ class TestEdgeDuplicateForm:
         edge_id = 0
 
         network.open_edge_config(edge)
-        selenium.execute_script("$('#edge_duplicate').val(0).trigger('input')")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("0")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
         selenium.wait_for(
             lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 0
         )
 
         network.open_edge_config(network.edges[edge_id])
-        selenium.execute_script("$('#edge_duplicate').val(42).trigger('input')")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("42")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
         selenium.wait_for(
             lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 42
         )
 
         network.open_edge_config(network.edges[edge_id])
-        selenium.execute_script("$('#edge_duplicate').val(56).trigger('input')")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("56")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
         selenium.wait_for(
             lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 56
         )
@@ -70,7 +66,5 @@ class TestEdgeDuplicateForm:
         assert network.edges[edge_id]["data"].get("duplicate_percentage") == 56
 
         network.open_edge_config(network.edges[edge_id])
-        field_val = selenium.execute_script(
-            "return parseInt($('#edge_duplicate').val()) || 0"
-        )
+        field_val = int(selenium.execute_script(f"return parseInt(document.querySelector('{Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector}').value) || 0"))
         assert field_val == 56

@@ -284,6 +284,15 @@ class Location:
                         "#config_server_add_dhcp_interface_select_iface_field"
                     )
 
+            class Edge(CommonDevice):
+                """Edge (link) configuration panel locators."""
+                MAIN_FORM = Locator("#config_edge_main_form")
+                LOSS_FIELD = Locator("#edge_loss")
+                DUPLICATE_FIELD = Locator("#edge_duplicate")
+                SUBMIT_BUTTON = Locator("#config_edge_main_form_submit_button", text="Сохранить всё")
+                SAVE_DUPLICATE_BUTTON = Locator("#config_edge_save_duplicate_button")
+                SAVE_LOSS_BUTTON = Locator("#config_edge_save_loss_button")
+
             # The only stable way for finding ip/subnet mask on page is using XPATHs
 
             @staticmethod
@@ -292,8 +301,12 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "IP field can't have index less than 0."
-                # Find ip input relative to config_content/form; use form-group rows to locate link index
-                return f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[1]"
+                # Try several common patterns for IP field (host / router / generic), fallback to positional
+                return (
+                    "(//div[@id='config_content']//input[@id='config_host_ip_example'] | "
+                    "//div[@id='config_content']//input[contains(@id,'_ip_')] | "
+                    f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[1]) [1]"
+                )
 
             @staticmethod
             def get_mask_field_xpath(id: int = 0):
@@ -301,8 +314,12 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "Subnet mask field can't have index less than 0."
-                # Mask field (second input in the same form-group)
-                return f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[2]"
+                # Try several common patterns for mask field (host / router / generic), fallback to positional
+                return (
+                    "(//div[@id='config_content']//input[@id='config_host_mask_example'] | "
+                    "//div[@id='config_content']//input[contains(@id,'_mask') or contains(@id,'_mask_')] | "
+                    f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[2]) [1]"
+                )
 
             MODAL_ERROR_DIALOG = Locator("#config_content > div")
 

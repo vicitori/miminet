@@ -39,11 +39,10 @@ class TestDuplicateFront:
         # Baseline: both edges duplicate = 0
         for edge in network.edges:
             selenium.execute_script(f"ShowEdgeConfig('{edge['data']['id']}')")
-            selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-            selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-            selenium.find_element(
-                By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-            ).click()
+            el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+            el.clear()
+            el.send_keys("0")
+            selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         packets_no_dup = network.run_emulation()
         count_no_dup = sum(len(group) for group in packets_no_dup)
@@ -54,18 +53,14 @@ class TestDuplicateFront:
         edge2_id = network.edges[1]["data"]["id"]
 
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("100")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("0")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         packets_first_dup = network.run_emulation()
         count_first_dup = sum(len(group) for group in packets_first_dup)
@@ -77,18 +72,14 @@ class TestDuplicateFront:
 
         # Case B: duplicate on second edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("0")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("0")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("100")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         packets_second_dup = network.run_emulation()
         count_second_dup = sum(len(group) for group in packets_second_dup)
@@ -100,18 +91,14 @@ class TestDuplicateFront:
 
         # Case C: duplicate on both edges
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("100")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").clear()
-        selenium.find_element(By.CSS_SELECTOR, "#edge_duplicate").send_keys("100")
-        selenium.find_element(
-            By.CSS_SELECTOR, "#config_edge_main_form_submit_button"
-        ).click()
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("100")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         packets_both_dup = network.run_emulation()
         count_both_dup = sum(len(group) for group in packets_both_dup)
