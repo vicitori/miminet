@@ -41,14 +41,16 @@ class TestDuplicationCombined:
         edge_id = 0
 
         network.open_edge_config(edge)
-        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+        selenium.wait_until_appear(By.CSS_SELECTOR, selector)
+        el = selenium.find_element(By.CSS_SELECTOR, selector)
         el.clear(); el.send_keys("42")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        # use wait_and_click helper for submit
+        selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
 
         selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 42)
         assert network.edges[edge_id]["data"].get("duplicate_percentage") == 42
 
-        # change to 0 and back to 56 to check persistence
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("0")
@@ -63,18 +65,18 @@ class TestDuplicationCombined:
 
         assert network.edges[edge_id]["data"].get("duplicate_percentage") == 56
 
-        # verify field value in DOM
         network.open_edge_config(network.edges[edge_id])
         field_val = int(selenium.execute_script(f"return parseInt(document.querySelector('{Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector}').value) || 0"))
         assert field_val == 56
 
     def test_duplicate_doubles_packets(self, selenium: MiminetTester, network: MiminetTestNetwork):
-        # baseline: zero duplication on both edges
         for edge in network.edges:
             selenium.execute_script(f"ShowEdgeConfig('{edge['data']['id']}')")
-            el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+            selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+            selenium.wait_until_appear(By.CSS_SELECTOR, selector)
+            el = selenium.find_element(By.CSS_SELECTOR, selector)
             el.clear(); el.send_keys("0")
-            selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+            selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
 
         packets_no_dup = network.run_emulation()
         count_no_dup = sum(len(group) for group in packets_no_dup)
