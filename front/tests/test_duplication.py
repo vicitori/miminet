@@ -52,7 +52,6 @@ class TestDuplicateCopyNetwork:
 
         network.add_edge(h1, h2)
 
-        # set duplicate=50
         edge = network.edges[0]
         network.open_edge_config(edge)
         selenium.find_element(

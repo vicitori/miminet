@@ -234,7 +234,9 @@ class MiminetTestNetwork:
                     pass
                 time.sleep(0.5)
             # re-raise a clearer exception
-            raise TimeoutException("Emulation player didn't appear and no packets were produced in time")
+            raise TimeoutException(
+                "Emulation player didn't appear and no packets were produced in time"
+            )
 
         # normal path: player appeared, read packets
         packets = self.__selenium.execute_script("return packets")

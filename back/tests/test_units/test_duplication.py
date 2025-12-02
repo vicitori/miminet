@@ -28,7 +28,6 @@ def count_packets(animation_json: str) -> int:
 
 
 def assert_duplicate_and_loss_present(animation_json: str) -> None:
-    """Assert that all packets contain duplicate_percentage and loss_percentage."""
     animation = json.loads(animation_json)
     for group in animation:
         for pkt in group:
