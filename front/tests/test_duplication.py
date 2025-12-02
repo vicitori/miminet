@@ -38,47 +38,63 @@ class TestDuplication:
         network.delete()
 
     def ensure_cytoscape_ready(self, selenium):
-        """Убедиться что Cytoscape инициализирован и ребра загружены"""
+        """Убедиться что Cytoscape инициализирован и ребра загружены.
+
+        Пытаемся несколько стратегий: проверить window.cy, затем вызвать функции DrawGraph/PostNodesEdges/ReloadNetwork,
+        и в случае неудачи — выполнить мягкий reload страницы и повторить.
+        """
         print("\nDEBUG: Checking Cytoscape state...")
 
-        # Проверить состояние Cytoscape
-        state = selenium.execute_script("""
-            if (typeof window.cy === 'undefined') {
-                return {cytoscape: false, edges: 0, nodes: 0};
-            }
-            return {
-                cytoscape: true,
-                edges: window.cy.edges().length,
-                nodes: window.cy.nodes().length
-            };
-        """)
+        def get_state():
+            return selenium.execute_script("""
+                try {
+                    return {
+                        cytoscape: typeof window.cy !== 'undefined',
+                        edges: (window.cy ? window.cy.edges().length : (window.edges? window.edges.length:0)),
+                        nodes: (window.cy ? window.cy.nodes().length : (window.nodes? window.nodes.length:0)),
+                        hasEdgesArray: !!(window.edges && window.edges.length>0)
+                    };
+                } catch(e) { return {cytoscape:false, edges:0, nodes:0, hasEdgesArray:false}; }
+            """)
 
+        state = get_state()
         print(f"Cytoscape state: {state}")
 
-        if not state['cytoscape'] or state['edges'] == 0:
-            print("WARNING: Cytoscape not ready or no edges found!")
-            print("Trying to refresh network view...")
+        if state['cytoscape'] and state['edges'] > 0:
+            return
 
-            # Попробовать обновить вид сети
-            selenium.execute_script("""
-                // Если есть функция обновления графа
-                if (typeof UpdateGraph === 'function') {
-                    UpdateGraph();
-                }
-                // Или перезагрузить данные
-                if (typeof ReloadNetwork === 'function') {
-                    ReloadNetwork();
-                }
-            """)
+        # Try to trigger graph redraw / data post
+        print("WARNING: Cytoscape not ready or no edges found — attempting DrawGraph/PostNodesEdges/ReloadNetwork")
+        selenium.execute_script("""
+            try {
+                if (typeof DrawGraph === 'function') DrawGraph();
+            } catch(e){}
+            try {
+                if (typeof PostNodesEdges === 'function') PostNodesEdges();
+            } catch(e){}
+            try {
+                if (typeof ReloadNetwork === 'function') ReloadNetwork();
+            } catch(e){}
+        """)
 
-            time.sleep(2)
+        # wait and re-check a few times
+        for attempt in range(5):
+            time.sleep(1)
+            state = get_state()
+            print(f"After attempt {attempt+1}, state: {state}")
+            if state['cytoscape'] and state['edges'] > 0:
+                return
 
-            # Проверить снова
-            state = selenium.execute_script("""
-                if (typeof window.cy === 'undefined') return 'cy undefined';
-                return window.cy.edges().length + ' edges, ' + window.cy.nodes().length + ' nodes';
-            """)
-            print(f"After refresh: {state}")
+        # As a last resort, try lightweight reload of the network page view
+        print("WARNING: attempts failed, performing soft reload of network view")
+        selenium.execute_script("location.reload();")
+        time.sleep(3)
+
+        state = get_state()
+        print(f"After reload, state: {state}")
+
+        if not (state['cytoscape'] and state['edges'] > 0):
+            raise AssertionError(f"Cytoscape not ready after retries, state: {state}")
 
     def test_duplicate_field_exists_and_saves(self, selenium: MiminetTester, network: MiminetTestNetwork):
         """Test 1: Verify duplicate field exists and saves values correctly"""
