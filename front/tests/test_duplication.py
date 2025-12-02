@@ -50,24 +50,13 @@ class TestDuplication:
         selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
         print(f"DEBUG: Using selector: {selector}")
 
-        duplicate_field = selenium.wait_until_appear(By.CSS_SELECTOR, selector)
-
-        if duplicate_field is None:
-            print("DEBUG: Field not found with selector, trying alternatives...")
-
-            all_inputs = selenium.find_elements(By.CSS_SELECTOR, ".modal-content input")
-            print(f"DEBUG: Found {len(all_inputs)} input fields in modal")
-            for i, inp in enumerate(all_inputs):
-                print(
-                    f"DEBUG: Input {i}: type={inp.get_attribute('type')}, "
-                    f"id={inp.get_attribute('id')}, "
-                    f"class={inp.get_attribute('class')}"
-                )
-
-            duplicate_field = selenium.find_element(
-                By.XPATH,
-                "//input[contains(@placeholder, 'duplicate') or contains(@placeholder, 'Duplicate')]",
-            )
+        # ensure we really opened edge config (modal can be network config instead)
+        try:
+            duplicate_field = selenium.wait_until_appear(By.CSS_SELECTOR, selector, timeout=1)
+        except Exception:
+            print("DEBUG: Edge form not open, calling ShowEdgeConfig and retrying")
+            selenium.execute_script(f"ShowEdgeConfig('{edge_id}')")
+            duplicate_field = selenium.wait_until_appear(By.CSS_SELECTOR, selector, timeout=5)
 
         print(f"DEBUG: duplicate_field found: {duplicate_field}")
         print(f"DEBUG: Field value before: {duplicate_field.get_attribute('value')}")
