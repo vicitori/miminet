@@ -48,9 +48,7 @@ class Location:
             Args:
                 id (int): Position of network in networks list. Starts from 0."""
             assert id >= 0, "Network button can't have index less than 0."
-            # Use relative path inside section to avoid absolute indexing from /html/body
-            # The networks list is inside a section; pick the N-th child div under that section
-            return f"//section//div[contains(@class,'my-networks-list')]/div[{id+1}]"
+            return f"/html/body/section/div/div/div[{id+2}]"
 
     class Network:
         """Specific network page."""
@@ -60,8 +58,7 @@ class Location:
         # Network device (or edge) configuration panel
         CONFIG_PANEL = Locator("#config_content")
         # Modal dialog for user warnings
-        # Prefer matching modal dialogs by class instead of absolute position
-        MODAL_DIALOG = Locator(xpath="(//div[contains(@class,'modal')])[last()]//div[contains(@class,'modal-dialog')]")
+        MODAL_DIALOG = Locator(xpath="/html/body/div[5]/div")
         # "Эмулировать"
         EMULATE_BUTTON = Locator("#NetworkEmulateButton", text="Эмулировать")
         # Pause animation button
@@ -285,40 +282,36 @@ class Location:
                     )
 
             class Edge(CommonDevice):
-                """Edge (link) configuration panel locators."""
+                # New edge config structure: separate form and fields in config_edge.html
                 MAIN_FORM = Locator("#config_edge_main_form")
+                SUBMIT_BUTTON = Locator("#config_edge_main_form_submit_button")
+                END_FORM_BUTTON = Locator("#config_edge_end_form")
                 LOSS_FIELD = Locator("#edge_loss")
                 DUPLICATE_FIELD = Locator("#edge_duplicate")
-                SUBMIT_BUTTON = Locator("#config_edge_main_form_submit_button", text="Сохранить всё")
-                SAVE_DUPLICATE_BUTTON = Locator("#config_edge_save_duplicate_button")
-                SAVE_LOSS_BUTTON = Locator("#config_edge_save_loss_button")
+                SOURCE_FIELD = Locator("#edge_source")
+                TARGET_FIELD = Locator("#edge_target")
 
             # The only stable way for finding ip/subnet mask on page is using XPATHs
 
             @staticmethod
             def get_ip_field_xpath(id: int = 0):
-                """XPATH for specific ip address from config panel.
+                """XPATH for specific ip address from config panel anchored to form id.
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "IP field can't have index less than 0."
-                # Try several common patterns for IP field (host / router / generic), fallback to positional
+                # form contains hidden inputs then groups; preserve previous indexing logic but anchor to form[@id='config_main_form']
                 return (
-                    "(//div[@id='config_content']//input[@id='config_host_ip_example'] | "
-                    "//div[@id='config_content']//input[contains(@id,'_ip_')] | "
-                    f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[1]) [1]"
+                    f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[1]"
                 )
 
             @staticmethod
             def get_mask_field_xpath(id: int = 0):
-                """XPATH for specific subnet mask from config panel.
+                """XPATH for specific subnet mask from config panel anchored to form id.
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "Subnet mask field can't have index less than 0."
-                # Try several common patterns for mask field (host / router / generic), fallback to positional
                 return (
-                    "(//div[@id='config_content']//input[@id='config_host_mask_example'] | "
-                    "//div[@id='config_content']//input[contains(@id,'_mask') or contains(@id,'_mask_')] | "
-                    f"//div[@id='config_content']//form//div[contains(@class,'form-group')][{1 + id}]//input[2]) [1]"
+                    f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[2]"
                 )
 
             MODAL_ERROR_DIALOG = Locator("#config_content > div")

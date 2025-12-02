@@ -5,19 +5,21 @@ from selenium.webdriver.common.by import By
 from utils.locators import Location
 
 
-class TestDuplicateFront:
+class TestDuplicationCombined:
     @pytest.fixture(scope="function")
     def network(self, selenium: MiminetTester):
         network = MiminetTestNetwork(selenium)
 
-        host1_id = network.add_node(NodeType.Host, x=30, y=50)
-        hub_id = network.add_node(NodeType.Hub, x=50, y=50)
-        host2_id = network.add_node(NodeType.Host, x=70, y=50)
+        # setup hosts and hub for duplication tests
+        h1 = network.add_node(NodeType.Host, x=30, y=50)
+        hub = network.add_node(NodeType.Hub, x=50, y=50)
+        h2 = network.add_node(NodeType.Host, x=70, y=50)
 
-        network.add_edge(host1_id, hub_id)
-        network.add_edge(hub_id, host2_id)
+        network.add_edge(h1, hub)
+        network.add_edge(hub, h2)
 
-        cfg1 = network.open_node_config(host1_id)
+        # configure hosts
+        cfg1 = network.open_node_config(h1)
         cfg1.fill_link("192.168.1.1", 24)
         cfg1.add_jobs(
             1,
@@ -25,7 +27,7 @@ class TestDuplicateFront:
         )
         cfg1.submit()
 
-        cfg2 = network.open_node_config(host2_id)
+        cfg2 = network.open_node_config(h2)
         cfg2.fill_link("192.168.1.2", 24)
         cfg2.submit()
 
@@ -33,25 +35,54 @@ class TestDuplicateFront:
 
         network.delete()
 
-    def test_duplicate_doubles_packets(
-        self, selenium: MiminetTester, network: MiminetTestNetwork
-    ):
-        # Baseline: both edges duplicate = 0
+    def test_edge_duplicate_written_and_saved(self, selenium: MiminetTester, network: MiminetTestNetwork):
+        # ensure edge config field exists and can be updated
+        edge = network.edges[0]
+        edge_id = 0
+
+        network.open_edge_config(edge)
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("42")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+
+        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 42)
+        assert network.edges[edge_id]["data"].get("duplicate_percentage") == 42
+
+        # change to 0 and back to 56 to check persistence
+        network.open_edge_config(network.edges[edge_id])
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("0")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 0)
+
+        network.open_edge_config(network.edges[edge_id])
+        el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
+        el.clear(); el.send_keys("56")
+        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 56)
+
+        assert network.edges[edge_id]["data"].get("duplicate_percentage") == 56
+
+        # verify field value in DOM
+        network.open_edge_config(network.edges[edge_id])
+        field_val = int(selenium.execute_script(f"return parseInt(document.querySelector('{Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector}').value) || 0"))
+        assert field_val == 56
+
+    def test_duplicate_doubles_packets(self, selenium: MiminetTester, network: MiminetTestNetwork):
+        # baseline: zero duplication on both edges
         for edge in network.edges:
             selenium.execute_script(f"ShowEdgeConfig('{edge['data']['id']}')")
             el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-            el.clear()
-            el.send_keys("0")
+            el.clear(); el.send_keys("0")
             selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
 
         packets_no_dup = network.run_emulation()
         count_no_dup = sum(len(group) for group in packets_no_dup)
 
-        # Case A: duplicate on first edge only
-        # Set edge1 = 100, edge2 = 0
         edge1_id = network.edges[0]["data"]["id"]
         edge2_id = network.edges[1]["data"]["id"]
 
+        # Case A: duplicate on first edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("100")
@@ -64,11 +95,7 @@ class TestDuplicateFront:
 
         packets_first_dup = network.run_emulation()
         count_first_dup = sum(len(group) for group in packets_first_dup)
-
-        # Expect doubling after first edge
-        assert (
-            count_first_dup == 2 * count_no_dup
-        ), f"Expected packets with duplication on first edge ({count_first_dup}) to be exactly twice packets without duplication ({count_no_dup})"
+        assert count_first_dup == 2 * count_no_dup, f"Expected doubling for first edge: {count_first_dup} vs {count_no_dup}"
 
         # Case B: duplicate on second edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
@@ -83,11 +110,7 @@ class TestDuplicateFront:
 
         packets_second_dup = network.run_emulation()
         count_second_dup = sum(len(group) for group in packets_second_dup)
-
-        # Expect doubling after second edge
-        assert (
-            count_second_dup == 2 * count_no_dup
-        ), f"Expected packets with duplication on second edge ({count_second_dup}) to be exactly twice packets without duplication ({count_no_dup})"
+        assert count_second_dup == 2 * count_no_dup, f"Expected doubling for second edge: {count_second_dup} vs {count_no_dup}"
 
         # Case C: duplicate on both edges
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
@@ -102,8 +125,4 @@ class TestDuplicateFront:
 
         packets_both_dup = network.run_emulation()
         count_both_dup = sum(len(group) for group in packets_both_dup)
-
-        # Expect doubling on both edges -> 4x
-        assert (
-            count_both_dup == 4 * count_no_dup
-        ), f"Expected packets with duplication on both edges ({count_both_dup}) to be exactly 4x packets without duplication ({count_no_dup})"
+        assert count_both_dup == 4 * count_no_dup, f"Expected 4x when both edges duplicate: {count_both_dup} vs {count_no_dup}"
