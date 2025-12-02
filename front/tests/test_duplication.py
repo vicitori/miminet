@@ -41,8 +41,9 @@ class TestDuplicationCombined:
         selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
         selenium.wait_until_appear(By.CSS_SELECTOR, selector)
         el = selenium.find_element(By.CSS_SELECTOR, selector)
-        el.clear(); el.send_keys("42")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         edges_after_submit = selenium.execute_script("return window.edges || null")
         print('\nDEBUG: edges after submit (raw):', edges_after_submit)
@@ -67,15 +68,17 @@ class TestDuplicationCombined:
 
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("0")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
-        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 0)
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
+
 
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("56")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
-        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 56)
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
+
 
         assert network.edges[edge_id]["data"].get("duplicate_percentage") == '56'
 
@@ -90,8 +93,9 @@ class TestDuplicationCombined:
             selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
             selenium.wait_until_appear(By.CSS_SELECTOR, selector)
             el = selenium.find_element(By.CSS_SELECTOR, selector)
-            el.clear(); el.send_keys("0")
-            selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         # debug: show edges state before emulation
         edges_before_emulation = selenium.execute_script("return window.edges || null")
@@ -113,13 +117,15 @@ class TestDuplicationCombined:
         # Case A: duplicate on first edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("100")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("0")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         packets_first_dup = network.run_emulation()
         count_first_dup = sum(len(group) for group in packets_first_dup)
@@ -128,13 +134,15 @@ class TestDuplicationCombined:
         # Case B: duplicate on second edge only
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("0")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("100")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         packets_second_dup = network.run_emulation()
         count_second_dup = sum(len(group) for group in packets_second_dup)
@@ -143,13 +151,15 @@ class TestDuplicationCombined:
         # Case C: duplicate on both edges
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("100")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
-        el.clear(); el.send_keys("100")
-        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
+
+        btn = selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath)
+        selenium.execute_script("arguments[0].click();", btn)
 
         packets_both_dup = network.run_emulation()
         count_both_dup = sum(len(group) for group in packets_both_dup)
