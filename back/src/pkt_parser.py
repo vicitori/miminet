@@ -200,20 +200,35 @@ def packet_parser(
             ts = ts.replace(".", "").ljust(16, "0")
 
             pkt_type = arp_packet_type(eth)
-            pkts.append(
-                {
-                    "data": {"id": packet_uuid(), "label": pkt_type, "type": "packet"},
-                    "config": {
-                        "type": pkt_type,
-                        "path": edge_id,
-                        "source": e_source,
-                        "target": e_target,
-                        "loss_percentage": loss_percentage,
-                        "duplicate_percentage": duplicate_percentage,
-                    },
-                    "timestamp": ts,
+            pkt_obj = {
+                "data": {"id": packet_uuid(), "label": pkt_type, "type": "packet"},
+                "config": {
+                    "type": pkt_type,
+                    "path": edge_id,
+                    "source": e_source,
+                    "target": e_target,
+                    "loss_percentage": loss_percentage,
+                    "duplicate_percentage": duplicate_percentage,
+                },
+                "timestamp": ts,
+            }
+            pkts.append(pkt_obj)
+
+            # Duplicate packet according to duplicate_percentage
+            try:
+                dp = int(duplicate_percentage)
+            except Exception:
+                dp = 0
+
+            if dp > 0 and random.random() < (dp / 100.0):
+                # create a copy with a tiny timestamp shift to place it after original
+                dup_pkt = {
+                    "data": dict(pkt_obj.get("data", {})),
+                    "config": dict(pkt_obj.get("config", {})),
+                    "timestamp": str(int(pkt_obj.get("timestamp", "0")) + 1),
                 }
-            )
+                dup_pkt["data"]["id"] = packet_uuid()
+                pkts.append(dup_pkt)
 
             continue
 
@@ -302,20 +317,35 @@ def packet_parser(
                 pkt_type + "\n" + inet_to_str(ip.src) + " > " + inet_to_str(ip.dst)
             )
 
-            pkts.append(
-                {
-                    "data": {"id": packet_uuid(), "label": pkt_type, "type": "packet"},
-                    "config": {
-                        "type": pkt_type,
-                        "path": edge_id,
-                        "source": e_source,
-                        "target": e_target,
-                        "loss_percentage": loss_percentage,
-                        "duplicate_percentage": duplicate_percentage,
-                    },
-                    "timestamp": ts,
+            pkt_obj = {
+                "data": {"id": packet_uuid(), "label": pkt_type, "type": "packet"},
+                "config": {
+                    "type": pkt_type,
+                    "path": edge_id,
+                    "source": e_source,
+                    "target": e_target,
+                    "loss_percentage": loss_percentage,
+                    "duplicate_percentage": duplicate_percentage,
+                },
+                "timestamp": ts,
+            }
+            pkts.append(pkt_obj)
+
+            # Duplicate packet according to duplicate_percentage
+            try:
+                dp = int(duplicate_percentage)
+            except Exception:
+                dp = 0
+
+            if dp > 0 and random.random() < (dp / 100.0):
+                # create a copy with a tiny timestamp shift to place it after original
+                dup_pkt = {
+                    "data": dict(pkt_obj.get("data", {})),
+                    "config": dict(pkt_obj.get("config", {})),
+                    "timestamp": str(int(pkt_obj.get("timestamp", "0")) + 1),
                 }
-            )
+                dup_pkt["data"]["id"] = packet_uuid()
+                pkts.append(dup_pkt)
 
     return pkts
 

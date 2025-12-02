@@ -72,20 +72,29 @@ class TestDuplicateEmulation:
         edge = network.edges[0]
         network.open_edge_config(edge)
 
-        selenium.find_element(
+        # Сначала запускаем эмуляцию, чтобы получить базовое количество пакетов
+        packets_before = network.run_emulation()
+
+        dup_elem = selenium.find_element(
             By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
-        ).send_keys(
-            "100"
-        )  # 100% duplication
+        )
+        # Очистим поле и установим 100% дублирование
+        dup_elem.clear()
+        dup_elem.send_keys("100")  # 100% duplication
 
         selenium.find_element(
             By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector
         ).click()
 
-        packets = network.run_emulation()
+        # Ждём, пока конфигурация применится в модели сети
+        selenium.wait_for(
+            lambda _: network.edges[0]["data"].get("duplicate_percentage") == "100"
+        )
 
-        # слабое допущение — пакетов стало больше 1
-        assert len(packets) > 1, "Duplicate did not affect packet count"
+        packets_after = network.run_emulation()
+
+        # Ожидаем детерминированного увеличения числа пакетов
+        assert len(packets_after) > len(packets_before), "Duplicate did not increase packet count"
 
 
 class TestDuplicateCopyNetwork:
