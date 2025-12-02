@@ -62,7 +62,7 @@ class TestDuplicationCombined:
                 "return window.edges.find(e=>e.data.id==arguments[0]).data.duplicate_percentage",
                 edge_data_id,
             )
-            == 42
+            == '42'
         )
 
         network.open_edge_config(network.edges[edge_id])
@@ -77,11 +77,11 @@ class TestDuplicationCombined:
         selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
         selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 56)
 
-        assert network.edges[edge_id]["data"].get("duplicate_percentage") == 56
+        assert network.edges[edge_id]["data"].get("duplicate_percentage") == '56'
 
         network.open_edge_config(network.edges[edge_id])
         field_val = int(selenium.execute_script(f"return parseInt(document.querySelector('{Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector}').value) || 0"))
-        assert field_val == 56
+        assert field_val == '56'
 
     def test_duplicate_doubles_packets(self, selenium: MiminetTester, network: MiminetTestNetwork):
         # set duplicate = 0 for all edges initially
