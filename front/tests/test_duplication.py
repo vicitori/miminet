@@ -1,70 +1,138 @@
+import pytest
 from selenium.webdriver.common.by import By
+from utils.networks import NodeType, MiminetTestNetwork
 from utils.locators import Location
-from conftest import MiminetTester, HOME_PAGE
-from miminet_test_network import MiminetTestNetwork
+from conftest import MiminetTester
 
 
-def test_edge_duplicate_field(selenium: MiminetTester):
-    """Проверяет работу поля дублирования пакетов в конфиге ребра."""
-    net = MiminetTestNetwork(selenium)
+class TestDuplicateBasic:
+    @pytest.fixture(scope="class")
+    def network(self, selenium: MiminetTester):
+        network = MiminetTestNetwork(selenium)
 
-    # Добавим два хоста
-    h1 = net.add_node(MiminetTestNetwork.__class__.Host)
-    h2 = net.add_node(MiminetTestNetwork.__class__.Host)
+        h1 = network.add_node(NodeType.Host)
+        h2 = network.add_node(NodeType.Host)
+        network.add_edge(h1, h2)
 
-    # Соединим их
-    edge_index = net.add_edge(h1, h2)
+        yield network
+        network.delete()
 
-    # Откроем конфиг ребра
-    edge = net.edges[edge_index]
-    net.open_edge_config(edge)
+    def test_duplicate_value(
+        self, selenium: MiminetTester, network: MiminetTestNetwork
+    ):
+        edge = network.edges[0]
+        network.open_edge_config(edge)
 
-    # Поле дублирования доступно в Location.Network.ConfigPanel.Edge
-    dup_selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+        dup_field = selenium.find_element(
+            By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+        )
 
-    # Найдём поле и введём значение
-    dup_el = selenium.find_element(By.CSS_SELECTOR, dup_selector)
-    dup_el.clear()
-    dup_el.send_keys('42')
+        dup_field.clear()
+        dup_field.send_keys("30")
 
-    # Сохраним
-    submit_selector = Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector
-    selenium.find_element(By.CSS_SELECTOR, submit_selector).click()
+        selenium.find_element(
+            By.CSS_SELECTOR,
+            Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector,
+        ).click()
 
-    # После сохранения ожидаем, что у ребра в глобальной переменной edges появилось duplicate_percentage
-    selenium.wait_for(lambda _: 'duplicate_percentage' in net.edges[edge_index]['data'])
-    assert net.edges[edge_index]['data']['duplicate_percentage'] == '42'
+        selenium.wait_for(lambda _: network.edges[0]["data"].get("duplicate") == 30)
+
+        assert network.edges[0]["data"]["duplicate"] == "30"
 
 
-def test_edge_duplicate_sent_on_post(selenium: MiminetTester):
-    """Проверяет, что при отправке на бэк-энд отправляются данные с полем duplicate_percentage."""
-    net = MiminetTestNetwork(selenium)
+class TestDuplicateEmulation:
+    @pytest.fixture(scope="class")
+    def network(self, selenium: MiminetTester):
+        network = MiminetTestNetwork(selenium)
 
-    h1 = net.add_node(MiminetTestNetwork.__class__.Host)
-    h2 = net.add_node(MiminetTestNetwork.__class__.Host)
-    edge_index = net.add_edge(h1, h2)
+        h1 = network.add_node(NodeType.Host)
+        h2 = network.add_node(NodeType.Host)
+        network.add_edge(h1, h2)
 
-    edge = net.edges[edge_index]
-    net.open_edge_config(edge)
+        # config host1 → ping host2
+        cfg = network.open_node_config(h1)
+        cfg.fill_link("10.0.0.1", 24)
+        cfg.add_jobs(
+            1, {Location.Network.ConfigPanel.Host.Job.PING_FIELD.selector: "10.0.0.2"}
+        )
+        cfg.submit()
 
-    dup_selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
-    dup_el = selenium.find_element(By.CSS_SELECTOR, dup_selector)
-    dup_el.clear()
-    dup_el.send_keys('7')
+        cfg2 = network.open_node_config(h2)
+        cfg2.fill_link("10.0.0.2", 24)
+        cfg2.submit()
 
-    submit_selector = Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector
-    selenium.find_element(By.CSS_SELECTOR, submit_selector).click()
+        yield network
+        network.delete()
 
-    # Симулируем отправку на бэк
-    # Предполагается, что функция PostNodesEdges формирует данные в переменной lastPostedData
-    selenium.execute_script("PostNodesEdges(); window.lastPostedData = window.__last_posted__; ")
+    def test_duplicate_changes_packet_count(
+        self, selenium: MiminetTester, network: MiminetTestNetwork
+    ):
+        edge = network.edges[0]
+        network.open_edge_config(edge)
 
-    posted = selenium.execute_script('return window.lastPostedData')
-    # Проверим, что в отправленных данных есть duplicate_percentage = 7
-    found = False
-    for e in posted.get('edges', []):
-        if e.get('data', {}).get('duplicate_percentage') == '7':
-            found = True
-            break
-    assert found, 'duplicate_percentage not present in posted edges'
+        selenium.find_element(
+            By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+        ).send_keys(
+            "100"
+        )  # 100% duplication
 
+        selenium.find_element(
+            By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector
+        ).click()
+
+        packets = network.run_emulation()
+
+        # слабое допущение — пакетов стало больше 1
+        assert len(packets) > 1, "Duplicate did not affect packet count"
+
+
+class TestDuplicateCopyNetwork:
+    @pytest.fixture(scope="class")
+    def network(self, selenium: MiminetTester):
+        network = MiminetTestNetwork(selenium)
+
+        h1 = network.add_node(NodeType.Host)
+        h2 = network.add_node(NodeType.Host)
+
+        network.add_edge(h1, h2)
+
+        # set duplicate=50
+        edge = network.edges[0]
+        network.open_edge_config(edge)
+        selenium.find_element(
+            By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
+        ).send_keys("50")
+
+        selenium.find_element(
+            By.CSS_SELECTOR,
+            Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector,
+        ).click()
+
+        yield network
+        network.delete()
+
+    def test_duplicate_preserved_on_copy(
+        self, selenium: MiminetTester, network: MiminetTestNetwork
+    ):
+
+        selenium.get(network.url)
+
+        initial_edges = network.edges
+
+        selenium.find_element(
+            By.CSS_SELECTOR, Location.Network.TopButton.COPY.selector
+        ).click()
+
+        selenium.wait_until_appear(By.XPATH, Location.Network.MODAL_DIALOG.xpath)
+
+        selenium.find_element(
+            By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath
+        ).click()
+
+        copy_net = MiminetTestNetwork(selenium, selenium.current_url)
+
+        assert copy_net.url != network.url
+
+        assert copy_net.edges[0]["data"].get("duplicate") == initial_edges[0][
+            "data"
+        ].get("duplicate")
