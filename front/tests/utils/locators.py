@@ -300,9 +300,7 @@ class Location:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "IP field can't have index less than 0."
                 # form contains hidden inputs then groups; preserve previous indexing logic but anchor to form[@id='config_main_form']
-                return (
-                    f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[1]"
-                )
+                return f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[1]"
 
             @staticmethod
             def get_mask_field_xpath(id: int = 0):
@@ -310,9 +308,7 @@ class Location:
                 Args:
                     id (int): Position of link in links list. Starts from 0."""
                 assert id >= 0, "Subnet mask field can't have index less than 0."
-                return (
-                    f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[2]"
-                )
+                return f"/html/body//form[@id='config_main_form']/div[{4 + id * 2}]/input[2]"
 
             MODAL_ERROR_DIALOG = Locator("#config_content > div")
 
