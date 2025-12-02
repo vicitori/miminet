@@ -35,9 +35,9 @@ class TestDuplicateBasic:
             Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector,
         ).click()
 
-        selenium.wait_for(lambda _: network.edges[0]["data"].get("duplicate") == 30)
+        selenium.wait_for(lambda _: network.edges[0]["data"].get("duplicate_percentage") == "30")
 
-        assert network.edges[0]["data"]["duplicate"] == "30"
+        assert network.edges[0]["data"]["duplicate_percentage"] == "30"
 
 
 class TestDuplicateEmulation:
@@ -133,6 +133,6 @@ class TestDuplicateCopyNetwork:
 
         assert copy_net.url != network.url
 
-        assert copy_net.edges[0]["data"].get("duplicate") == initial_edges[0][
+        assert copy_net.edges[0]["data"].get("duplicate_percentage") == initial_edges[0][
             "data"
-        ].get("duplicate")
+        ].get("duplicate_percentage")
