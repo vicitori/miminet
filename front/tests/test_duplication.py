@@ -48,8 +48,27 @@ class TestDuplicationCombined:
         # use wait_and_click helper for submit
         selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
 
-        selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 42)
-        assert network.edges[edge_id]["data"].get("duplicate_percentage") == 42
+        # debug: dump window.edges immediately after submit
+        edges_after_submit = selenium.execute_script("return window.edges || null")
+        print('\nDEBUG: edges after submit (raw):', edges_after_submit)
+
+        # wait until JS edges array is updated for this edge
+        edge_data_id = edge['data']['id']
+        selenium.wait_for(
+            lambda d: d.execute_script(
+                "return !!(window.edges && window.edges.find(e=>e.data.id==arguments[0]) && window.edges.find(e=>e.data.id==arguments[0]).data.duplicate_percentage==arguments[1])",
+                edge_data_id,
+                42,
+            ),
+            timeout=10,
+        )
+        assert (
+            selenium.execute_script(
+                "return window.edges.find(e=>e.data.id==arguments[0]).data.duplicate_percentage",
+                edge_data_id,
+            )
+            == 42
+        )
 
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
@@ -78,8 +97,18 @@ class TestDuplicationCombined:
             el.clear(); el.send_keys("0")
             selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
 
+        # debug: show edges state before emulation
+        edges_before_emulation = selenium.execute_script("return window.edges || null")
+        print('\nDEBUG: edges before emulation (raw):', edges_before_emulation)
+
+        # ensure edge config modal closed before emulation
+        try:
+            selenium.wait_until_disappear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.MAIN_FORM.selector, timeout=5)
+        except Exception:
+            pass
+
         packets_no_dup = network.run_emulation()
-        count_no_dup = sum(len(group) for group in packets_no_dup)
+
 
         edge1_id = network.edges[0]["data"]["id"]
         edge2_id = network.edges[1]["data"]["id"]
