@@ -314,7 +314,11 @@ const ConfigEdgeForm = function (edge_id) {
         );
 
         edgeSaveXHR = UpdateEdgeConfiguration(data);
-        inputsToDisable.prop("disabled", false);
+
+        edgeSaveXHR.always(function() {
+            inputsToDisable.prop("disabled", false);
+            $('#config_edge_main_form_submit_button').html("Сохранить");
+        });
     }
 
     $('#config_edge_main_form_submit_button, #config_edge_end_form').off('click').on('click', handleEdgeClick);
