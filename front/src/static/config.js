@@ -313,12 +313,21 @@ const ConfigEdgeForm = function (edge_id) {
             '<span class="spinner-border spinner-border-sm" role="status"></span> Сохранение...'
         );
 
-        edgeSaveXHR = UpdateEdgeConfiguration(data);
+        inputsToDisable.prop("disabled", true);
 
-        edgeSaveXHR.always(function() {
-            inputsToDisable.prop("disabled", false);
-            $('#config_edge_main_form_submit_button').html("Сохранить");
-        });
+        $('#config_edge_main_form_submit_button').html(
+            '<span class="spinner-border spinner-border-sm" role="status"></span> Сохранение...'
+        );
+
+        edgeSaveXHR = UpdateEdgeConfiguration(data)
+            .done(function() {
+                inputsToDisable.prop("disabled", false);
+                $('#config_edge_main_form_submit_button').html('Сохранить');
+            })
+            .fail(function() {
+                inputsToDisable.prop("disabled", false);
+                $('#config_edge_main_form_submit_button').html('Ошибка');
+            });
     }
 
     $('#config_edge_main_form_submit_button, #config_edge_end_form').off('click').on('click', handleEdgeClick);
