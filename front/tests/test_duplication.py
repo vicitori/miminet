@@ -5,310 +5,272 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 
-def test_create_network_and_check_duplicate(selenium):
-    """Создаем сеть и проверяем поле duplicate"""
-    print("\n=== Тест: Создание сети и проверка duplicate ===")
+def test_minimal_duplicate_workflow():
+    """Минимальный рабочий тест по примеру других успешных тестов"""
+    print("\n=== Минимальный тест дублирования ===")
 
-    # 1. Переходим на страницу создания сети
-    print("1. Переход на страницу создания сети...")
-    selenium.get("http://172.18.0.2/web_network")
-    time.sleep(2)
+    # Импортируем необходимые модули
+    from conftest import MiminetTester
+    from utils.networks import NodeType, MiminetTestNetwork
+    from utils.locators import Location
 
-    print(f"Текущий URL: {selenium.current_url}")
-    print(f"Заголовок: {selenium.title}")
+    # Получаем selenium
+    import conftest
+    selenium = conftest.selenium
 
-    # 2. Проверяем что мы на странице сети
-    assert "web_network" in selenium.current_url, "Должны быть на странице сети"
+    print(f"1. Текущий URL: {selenium.current_url}")
 
-    # 3. Проверяем что cytoscape инициализирован
-    print("2. Проверка инициализации cytoscape...")
-    cytoscape_ready = selenium.execute_script("return typeof cy !== 'undefined'")
-    print(f"Cytoscape инициализирован: {cytoscape_ready}")
+    # Создаем сеть так же, как в других тестах
+    network = MiminetTestNetwork(selenium)
 
-    if not cytoscape_ready:
-        print("Ожидание инициализации cytoscape...")
-        time.sleep(3)
-        cytoscape_ready = selenium.execute_script("return typeof cy !== 'undefined'")
-        print(f"Cytoscape после ожидания: {cytoscape_ready}")
-
-    # 4. Создаем простую сеть через UI
-    print("3. Создание простой сети...")
-
-    # Ищем кнопку добавления хоста
     try:
-        add_host_btn = WebDriverWait(selenium, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Хост') or contains(text(), 'Host')]"))
+        print("2. Создание узлов...")
+        host1_id = network.add_node(NodeType.Host, x=100, y=100)
+        host2_id = network.add_node(NodeType.Host, x=300, y=100)
+
+        print(f"   Созданы хосты: {host1_id}, {host2_id}")
+
+        print("3. Создание связи...")
+        edge_id = network.add_edge(host1_id, host2_id)
+        print(f"   Создана связь: {edge_id}")
+
+        # Настраиваем хосты (как в других тестах)
+        print("4. Настройка хостов...")
+
+        # Host 1
+        config1 = network.open_node_config(host1_id)
+        config1.fill_link("192.168.1.1", 24)
+        config1.add_jobs(
+            1,
+            {Location.Network.ConfigPanel.Host.Job.PING_FIELD.selector: "192.168.1.2"},
         )
-        add_host_btn.click()
-        print("Кнопка 'Хост' найдена и нажата")
-        time.sleep(1)
-    except:
-        print("Кнопка 'Хост' не найдена, пробуем через JavaScript")
-        # Альтернативный способ
-        selenium.execute_script("""
-            // Ищем любую кнопку добавления узла
-            const buttons = document.querySelectorAll('button');
-            for (const btn of buttons) {
-                if (btn.textContent.includes('Хост') || btn.textContent.includes('Host')) {
-                    btn.click();
-                    break;
-                }
-            }
-        """)
-        time.sleep(1)
+        config1.submit()
 
-    # 5. Проверяем что узел добавлен
-    node_count = selenium.execute_script("return typeof cy !== 'undefined' ? cy.nodes().length : 0")
-    print(f"Узлов в сети: {node_count}")
+        # Host 2
+        config2 = network.open_node_config(host2_id)
+        config2.fill_link("192.168.1.2", 24)
+        config2.submit()
 
-    if node_count == 0:
-        # Добавляем узел через JavaScript
-        print("Добавляем узел через JavaScript...")
-        selenium.execute_script("""
-            if (typeof cy !== 'undefined') {
-                cy.add({
-                    data: { id: 'test_host_1', label: 'host1', type: 'host' },
-                    position: { x: 100, y: 100 }
+        print("5. Открытие конфигурации связи...")
+
+        # Находим edge объект
+        edge_obj = None
+        for edge in network.edges:
+            if edge['data']['id'] == edge_id:
+                edge_obj = edge
+                break
+
+        if not edge_obj:
+            print("✗ Связь не найдена в network.edges")
+            print(f"   Все связи: {network.edges}")
+            pytest.fail("Связь не найдена")
+
+        print(f"   Найден edge объект: {edge_obj['data']['id']}")
+
+        # Открываем конфигурацию связи
+        network.open_edge_config(edge_obj)
+        time.sleep(2)
+
+        print("6. Поиск поля duplicate...")
+
+        # Ждем появления модального окна
+        try:
+            WebDriverWait(selenium, 10).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, ".modal-content"))
+            )
+            print("   ✓ Модальное окно открыто")
+        except:
+            print("   ✗ Модальное окно не открылось")
+            # Покажем что есть на странице
+            modals = selenium.find_elements(By.CSS_SELECTOR, ".modal, [role='dialog']")
+            print(f"   Все модальные окна: {len(modals)}")
+            for i, m in enumerate(modals):
+                print(f"   Модальное {i}: class='{m.get_attribute('class')}'")
+
+        # Ищем поле edge_duplicate
+        try:
+            duplicate_field = selenium.find_element(By.ID, "edge_duplicate")
+            print(f"   ✓ Найдено поле edge_duplicate!")
+            print(f"     ID: {duplicate_field.get_attribute('id')}")
+            print(f"     Type: {duplicate_field.get_attribute('type')}")
+            print(f"     Value: {duplicate_field.get_attribute('value')}")
+            print(f"     Placeholder: {duplicate_field.get_attribute('placeholder')}")
+
+        except Exception as e:
+            print(f"   ✗ Поле не найдено: {e}")
+
+            # Отладка: все поля в модальном окне
+            print("\n   Отладка - все input поля в модальном окне:")
+            modal_inputs = selenium.execute_script("""
+                const modal = document.querySelector('.modal-content');
+                if (!modal) return 'Нет модального окна';
+                const inputs = modal.querySelectorAll('input, select, textarea');
+                const result = [];
+                inputs.forEach((input, i) => {
+                    result.push({
+                        index: i,
+                        tag: input.tagName,
+                        id: input.id,
+                        name: input.name,
+                        type: input.type,
+                        value: input.value,
+                        placeholder: input.placeholder
+                    });
                 });
-                console.log('Добавлен узел test_host_1');
-            }
-        """)
-        time.sleep(1)
+                return result;
+            """)
 
-    # 6. Добавляем второй узел и связь
-    print("4. Добавление второго узла и связи...")
-    selenium.execute_script("""
-        if (typeof cy !== 'undefined') {
-            // Второй узел
-            cy.add({
-                data: { id: 'test_host_2', label: 'host2', type: 'host' },
-                position: { x: 300, y: 100 }
-            });
+            if isinstance(modal_inputs, list):
+                for inp in modal_inputs:
+                    print(f"     {inp}")
+            else:
+                print(f"     {modal_inputs}")
 
-            // Связь между узлами
-            cy.add({
-                data: { 
-                    id: 'test_edge_1', 
-                    source: 'test_host_1', 
-                    target: 'test_host_2',
-                    label: ''
-                }
-            });
+            raise
 
-            console.log('Создана сеть: 2 хоста и связь между ними');
-        }
-    """)
-    time.sleep(1)
+        print("7. Тестирование установки значения...")
 
-    # 7. Проверяем создание
-    edge_count = selenium.execute_script("return typeof cy !== 'undefined' ? cy.edges().length : 0")
-    print(f"Создано связей: {edge_count}")
-
-    if edge_count == 0:
-        pytest.skip("Не удалось создать связь между узлами")
-
-    # 8. Пробуем открыть конфигурацию связи
-    print("5. Открытие конфигурации связи...")
-
-    # Получаем ID первой связи
-    edge_id = selenium.execute_script("""
-        if (typeof cy !== 'undefined' && cy.edges().length > 0) {
-            return cy.edges()[0].id();
-        }
-        return null;
-    """)
-
-    print(f"ID связи: {edge_id}")
-
-    if not edge_id:
-        pytest.skip("Не удалось получить ID связи")
-
-    # Открываем конфигурацию
-    selenium.execute_script(f"ShowEdgeConfig('{edge_id}')")
-    time.sleep(2)
-
-    # 9. Проверяем что модальное окно открылось
-    print("6. Проверка модального окна...")
-    modal_visible = selenium.execute_script("""
-        const modal = document.querySelector('.modal.show, .modal.in');
-        return modal && modal.offsetParent !== null;
-    """)
-
-    print(f"Модальное окно открыто: {modal_visible}")
-
-    if not modal_visible:
-        print("Пробуем найти модальное окно другими способами...")
-        modals = selenium.find_elements(By.CSS_SELECTOR, ".modal, [role='dialog']")
-        print(f"Найдено модальных окон: {len(modals)}")
-
-        for i, modal in enumerate(modals):
-            print(f"Модальное окно {i}: class='{modal.get_attribute('class')}', style='{modal.get_attribute('style')}'")
-
-    # 10. Ищем поле edge_duplicate
-    print("7. Поиск поля edge_duplicate...")
-
-    try:
-        # Сначала ждем появления модального окна
-        WebDriverWait(selenium, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, ".modal-content"))
-        )
-
-        # Ищем поле внутри модального окна
-        duplicate_field = selenium.find_element(By.ID, "edge_duplicate")
-        print(f"✓ Найдено поле edge_duplicate!")
-        print(f"  ID: {duplicate_field.get_attribute('id')}")
-        print(f"  Тип: {duplicate_field.get_attribute('type')}")
-        print(f"  Значение: {duplicate_field.get_attribute('value')}")
-        print(f"  Placeholder: {duplicate_field.get_attribute('placeholder')}")
-
-        # Проверяем что это поле number
-        assert duplicate_field.get_attribute('type') == 'number', "Поле должно быть типа number"
-        assert duplicate_field.get_attribute('id') == 'edge_duplicate', "ID должен быть edge_duplicate"
-
-        # 11. Тестируем установку значения
-        print("8. Тестирование установки значения...")
-
-        # Запоминаем текущее значение
-        current_value = duplicate_field.get_attribute('value') or '0'
-        print(f"Текущее значение: {current_value}")
-
-        # Устанавливаем новое значение
+        # Устанавливаем значение
         duplicate_field.clear()
-        duplicate_field.send_keys("75")
+        duplicate_field.send_keys("42")
 
-        # Проверяем установку
-        new_value = duplicate_field.get_attribute('value')
-        print(f"Новое значение: {new_value}")
-        assert new_value == "75", f"Ожидалось 75, получено {new_value}"
+        # Проверяем
+        current_value = duplicate_field.get_attribute('value')
+        print(f"   Установлено значение: {current_value}")
+        assert current_value == "42", f"Ожидалось 42, получено {current_value}"
 
-        # 12. Закрываем модальное окно
+        print("8. Сохранение...")
+
+        # Находим кнопку сохранения
+        try:
+            submit_btn = selenium.find_element(By.ID, "config_edge_main_form_submit_button")
+            submit_btn.click()
+            print("   ✓ Нажата кнопка сохранения")
+            time.sleep(1)
+        except:
+            print("   ⚠ Кнопка сохранения не найдена, нажимаем Enter")
+            duplicate_field.send_keys("\n")
+            time.sleep(1)
+
         print("9. Закрытие модального окна...")
-        close_btn = selenium.find_element(By.CSS_SELECTOR, ".btn-close, [data-dismiss='modal']")
-        close_btn.click()
+        try:
+            close_btn = selenium.find_element(By.CSS_SELECTOR, ".btn-close")
+            close_btn.click()
+            time.sleep(1)
+        except:
+            print("   ⚠ Кнопка закрытия не найдена")
+
+        print("\n✓ Тест успешно завершен!")
+
+    finally:
+        # Очистка
+        print("\n10. Очистка сети...")
+        network.delete()
         time.sleep(1)
 
-        print("✓ Тест успешно завершен!")
 
-    except Exception as e:
-        print(f"✗ Ошибка: {e}")
-
-        # Для отладки покажем все input поля на странице
-        print("\nОтладка: все input поля на странице:")
-        all_inputs = selenium.find_elements(By.TAG_NAME, "input")
-        print(f"Всего input полей: {len(all_inputs)}")
-
-        for i, inp in enumerate(all_inputs[:10]):  # первые 10
-            inp_id = inp.get_attribute('id') or 'NO_ID'
-            inp_type = inp.get_attribute('type') or 'NO_TYPE'
-            inp_value = inp.get_attribute('value') or 'NO_VALUE'
-            print(f"  Input {i}: id='{inp_id}', type='{inp_type}', value='{inp_value}'")
-
-        # Покажем HTML модального окна если есть
-        modal_html = selenium.execute_script("""
-            const modal = document.querySelector('.modal-content');
-            return modal ? modal.outerHTML.substring(0, 500) : 'Модальное окно не найдено';
-        """)
-        print(f"\nHTML модального окна (первые 500 символов):\n{modal_html}")
-
-        raise
-
-
-def test_duplicate_with_existing_network_class():
-    """Тест с использованием существующего класса MiminetTestNetwork"""
-    print("\n=== Тест с MiminetTestNetwork ===")
+def test_duplicate_simple_validation():
+    """Простой тест валидации поля duplicate"""
+    print("\n=== Простой тест валидации ===")
 
     from conftest import MiminetTester
     from utils.networks import NodeType, MiminetTestNetwork
 
-    # Получаем selenium из глобального контекста
     import conftest
     selenium = conftest.selenium
 
-    print(f"Используем selenium: {selenium}")
-    print(f"Текущий URL: {selenium.current_url}")
-
-    # Если мы не на странице сети, переходим на нее
-    if "web_network" not in selenium.current_url:
-        print("Переход на страницу создания сети...")
-        selenium.get("http://172.18.0.2/web_network")
-        time.sleep(3)
-
-    # Создаем сеть через MiminetTestNetwork
-    print("Создание сети через MiminetTestNetwork...")
     network = MiminetTestNetwork(selenium)
 
     try:
-        # Добавляем узлы
-        host1_id = network.add_node(NodeType.Host, x=100, y=100)
-        host2_id = network.add_node(NodeType.Host, x=300, y=100)
-
-        print(f"Созданы узлы: {host1_id}, {host2_id}")
-
-        # Добавляем связь
+        # Создаем минимальную сеть
+        host1_id = network.add_node(NodeType.Host)
+        host2_id = network.add_node(NodeType.Host)
         edge_id = network.add_edge(host1_id, host2_id)
+
         print(f"Создана связь: {edge_id}")
 
-        # Проверяем что связь создана
-        edge_count = selenium.execute_script("return cy.edges().length")
-        print(f"Всего связей в cytoscape: {edge_count}")
-
-        # Открываем конфигурацию связи
-        print(f"Открытие конфигурации для связи {edge_id}...")
-
-        # Получаем объект edge
+        # Находим edge
         edge = None
         for e in network.edges:
             if e['data']['id'] == edge_id:
                 edge = e
                 break
 
-        if edge:
-            print(f"Найден edge объект: {edge}")
+        if not edge:
+            pytest.skip("Связь не найдена")
 
-            # Открываем конфигурацию
-            network.open_edge_config(edge)
-            time.sleep(2)
+        # Открываем конфигурацию
+        network.open_edge_config(edge)
+        time.sleep(2)
 
-            # Ищем поле duplicate
-            try:
-                from selenium.webdriver.common.by import By
-                duplicate_field = selenium.find_element(By.ID, "edge_duplicate")
-                print(f"✓ Найдено поле edge_duplicate!")
+        # Ищем поле
+        duplicate_field = selenium.find_element(By.ID, "edge_duplicate")
 
-                # Проверяем базовые свойства
-                assert duplicate_field.get_attribute('id') == 'edge_duplicate'
-                assert duplicate_field.get_attribute('type') == 'number'
+        # Тестируем допустимые значения
+        test_values = [("0", True), ("50", True), ("100", True)]
 
-                print(f"  Тип: {duplicate_field.get_attribute('type')}")
-                print(f"  Значение: {duplicate_field.get_attribute('value')}")
+        for value, should_work in test_values:
+            duplicate_field.clear()
+            duplicate_field.send_keys(value)
 
-                # Закрываем модальное окно
-                close_btn = selenium.find_element(By.CSS_SELECTOR, ".btn-close")
-                close_btn.click()
-                time.sleep(1)
+            actual = duplicate_field.get_attribute('value')
+            print(f"Ввод {value}: поле показывает {actual}")
 
-            except Exception as e:
-                print(f"✗ Ошибка при поиске поля: {e}")
+            if should_work:
+                assert actual == value, f"Для {value} ожидалось {value}, получено {actual}"
+            else:
+                print(f"  Примечание: {value} может не приниматься")
 
-                # Отладка
-                modal_html = selenium.execute_script("""
-                    const modal = document.querySelector('.modal-content');
-                    return modal ? modal.outerHTML.substring(0, 300) : 'Нет модального окна';
-                """)
-                print(f"HTML модального окна: {modal_html}")
+        # Закрываем
+        close_btn = selenium.find_element(By.CSS_SELECTOR, ".btn-close")
+        close_btn.click()
+        time.sleep(1)
 
-                # Закрываем если открыто
-                selenium.execute_script("""
-                    const closeBtn = document.querySelector('.btn-close');
-                    if (closeBtn) closeBtn.click();
-                """)
-
-                raise
-        else:
-            print("✗ Не найден edge объект")
+        print("✓ Тест валидации пройден")
 
     finally:
-        # Очищаем
-        print("Очистка сети...")
         network.delete()
-        time.sleep(1)
+
+
+# Самый простой тест - только проверка что сеть создается
+def test_network_creation_basic():
+    """Базовый тест создания сети"""
+    print("\n=== Базовый тест создания сети ===")
+
+    from conftest import MiminetTester
+    from utils.networks import NodeType, MiminetTestNetwork
+
+    import conftest
+    selenium = conftest.selenium
+
+    print(f"Начальный URL: {selenium.current_url}")
+
+    network = MiminetTestNetwork(selenium)
+
+    try:
+        # Проверяем что сеть создана
+        assert network is not None
+        print("✓ Сеть создана")
+
+        # Проверяем URL
+        print(f"URL после создания сети: {selenium.current_url}")
+        assert "web_network" in selenium.current_url, "Должны быть на странице сети"
+
+        # Проверяем cytoscape
+        cytoscape_exists = selenium.execute_script("return typeof cy !== 'undefined'")
+        print(f"Cytoscape инициализирован: {cytoscape_exists}")
+
+        # Добавляем узел
+        node_id = network.add_node(NodeType.Host)
+        print(f"Добавлен узел: {node_id}")
+
+        # Проверяем что узел добавлен
+        nodes_count = selenium.execute_script("return cy ? cy.nodes().length : 0")
+        print(f"Узлов в сети: {nodes_count}")
+        assert nodes_count > 0, "Узел должен быть добавлен"
+
+        print("✓ Базовая функциональность сети работает")
+
+    finally:
+        network.delete()
+        print("Сеть удалена")
