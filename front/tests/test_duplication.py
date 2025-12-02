@@ -1,5 +1,5 @@
 import pytest
-from conftest import MiminetTester
+from conftest import MiminetTester, selenium
 from utils.networks import NodeType, MiminetTestNetwork
 from selenium.webdriver.common.by import By
 from utils.locators import Location
@@ -10,7 +10,6 @@ class TestDuplicationCombined:
     def network(self, selenium: MiminetTester):
         network = MiminetTestNetwork(selenium)
 
-        # setup hosts and hub for duplication tests
         h1 = network.add_node(NodeType.Host, x=30, y=50)
         hub = network.add_node(NodeType.Hub, x=50, y=50)
         h2 = network.add_node(NodeType.Host, x=70, y=50)
@@ -18,7 +17,6 @@ class TestDuplicationCombined:
         network.add_edge(h1, hub)
         network.add_edge(hub, h2)
 
-        # configure hosts
         cfg1 = network.open_node_config(h1)
         cfg1.fill_link("192.168.1.1", 24)
         cfg1.add_jobs(
@@ -36,7 +34,6 @@ class TestDuplicationCombined:
         network.delete()
 
     def test_edge_duplicate_written_and_saved(self, selenium: MiminetTester, network: MiminetTestNetwork):
-        # ensure edge config field exists and can be updated
         edge = network.edges[0]
         edge_id = 0
 
@@ -45,10 +42,8 @@ class TestDuplicationCombined:
         selenium.wait_until_appear(By.CSS_SELECTOR, selector)
         el = selenium.find_element(By.CSS_SELECTOR, selector)
         el.clear(); el.send_keys("42")
-        # use wait_and_click helper for submit
-        selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
-        # debug: dump window.edges immediately after submit
         edges_after_submit = selenium.execute_script("return window.edges || null")
         print('\nDEBUG: edges after submit (raw):', edges_after_submit)
 
@@ -73,13 +68,13 @@ class TestDuplicationCombined:
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("0")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
         selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 0)
 
         network.open_edge_config(network.edges[edge_id])
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("56")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
         selenium.wait_for(lambda _: network.edges[edge_id]["data"].get("duplicate_percentage") == 56)
 
         assert network.edges[edge_id]["data"].get("duplicate_percentage") == 56
@@ -89,13 +84,14 @@ class TestDuplicationCombined:
         assert field_val == 56
 
     def test_duplicate_doubles_packets(self, selenium: MiminetTester, network: MiminetTestNetwork):
+        # set duplicate = 0 for all edges initially
         for edge in network.edges:
             selenium.execute_script(f"ShowEdgeConfig('{edge['data']['id']}')")
             selector = Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector
             selenium.wait_until_appear(By.CSS_SELECTOR, selector)
             el = selenium.find_element(By.CSS_SELECTOR, selector)
             el.clear(); el.send_keys("0")
-            selenium.wait_and_click(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector)
+            selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         # debug: show edges state before emulation
         edges_before_emulation = selenium.execute_script("return window.edges || null")
@@ -108,7 +104,8 @@ class TestDuplicationCombined:
             pass
 
         packets_no_dup = network.run_emulation()
-
+        # total packets (sum of groups) for baseline
+        count_no_dup = sum(len(group) for group in packets_no_dup)
 
         edge1_id = network.edges[0]["data"]["id"]
         edge2_id = network.edges[1]["data"]["id"]
@@ -117,12 +114,12 @@ class TestDuplicationCombined:
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("0")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         packets_first_dup = network.run_emulation()
         count_first_dup = sum(len(group) for group in packets_first_dup)
@@ -132,12 +129,12 @@ class TestDuplicationCombined:
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("0")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         packets_second_dup = network.run_emulation()
         count_second_dup = sum(len(group) for group in packets_second_dup)
@@ -147,12 +144,12 @@ class TestDuplicationCombined:
         selenium.execute_script(f"ShowEdgeConfig('{edge1_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         selenium.execute_script(f"ShowEdgeConfig('{edge2_id}')")
         el = selenium.wait_until_appear(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.DUPLICATE_FIELD.selector)
         el.clear(); el.send_keys("100")
-        selenium.find_element(By.CSS_SELECTOR, Location.Network.ConfigPanel.Edge.SUBMIT_BUTTON.selector).click()
+        selenium.find_element(By.XPATH, Location.Network.ModalButton.GO_TO_EDITING.xpath).click()
 
         packets_both_dup = network.run_emulation()
         count_both_dup = sum(len(group) for group in packets_both_dup)
