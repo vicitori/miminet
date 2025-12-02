@@ -298,7 +298,6 @@ const ConfigEdgeForm = function (edge_id) {
 
         let data = $('#config_edge_main_form').serialize();
         const edge = edges.find(e => e.data.id === edge_id);
-        console.log(edge);
         const lossValue = $("#edge_loss").val();
         const duplicateValue = $("#edge_duplicate").val();
 
@@ -306,13 +305,8 @@ const ConfigEdgeForm = function (edge_id) {
             edge.data.loss_percentage = lossValue;
             edge.data.duplicate_percentage = duplicateValue;
         }
+
         const inputsToDisable = $('#edge_loss, #edge_duplicate, #config_edge_main_form_submit_button');
-        inputsToDisable.prop("disabled", true);
-
-        $('#config_edge_main_form_submit_button').html(
-            '<span class="spinner-border spinner-border-sm" role="status"></span> Сохранение...'
-        );
-
         inputsToDisable.prop("disabled", true);
 
         $('#config_edge_main_form_submit_button').html(
